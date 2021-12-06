@@ -59,7 +59,8 @@ QT=Q_CO2['Q']
 Qref=286.09
 
 #Number Density
-mixCO2=0.95
+mixCO2=0.953
+Pref = 1013250 #hPa(1atm) --> Ba
 R=8.31E+7  #(g*cm^2*s^2)/(mol*K)
 Pself=mixCO2*P
 #nd=((Pself*Na)/(R*T))
@@ -76,63 +77,50 @@ print('波数',v)
 #(1)ドップラー幅νD(T)
 #Voigt functionの計算まで使用
 def Doppler():
-    vD=np.empty(len(vij),len(T))
+    vD=np.empty((len(vij),len(T)))
     for i in range(len(vij)):
         vD[i,:] = ((vij[i]/c)*((2*k*T*Na)/M)**(1/2)) #cm-1
     print('ドップラー幅',vD)
 
-    return 0
+    return vD
 
-#%%
-#(2)ローレンツ幅νL(p,T) 
+# %%
+# (2)ローレンツ幅νL(p,T) 
 def Lorenz():
-    mixCO2 = 0.9532
     Pself = mixCO2*P #分圧
-    Pref = 1013250 #hPa(1atm) --> Ba
-
-    vL = np.empty(len(vij),len(T))
+    vL = np.empty((len(vij),len(T)))
     for i in range(len(vij)):
         vL[i,:] = (((Tref/T)**nair[i])*(gammaair[i]*(P-Pself)/Pref+gammaself[i]*Pself/Pref)) #cm-1
     print('ローレンツ幅',vL)
 
-    return 0
-
-#gammerairとgammerself、nairを削除
-del gammaair,gammaself,nair
-
+    return vL
 #nyo=np.stack([νD,νL],1)
 #np.savetxt('doppler_lorentzian.dat',nyo)
 # %%
 #(3)x
-
-def Voigt_x():
-    x = np.empty((len(vij), len(T), len(v)))
-    vijs =np.empty((len(vij), len(T)))
+def Voigt_x(vD):
+    x = np.empty(((len(vij), len(T), len(v))))
+    vijs =np.empty(((len(vij), len(T))))
     for i in range(len(vij)):
         for j in range(len(T)):
             vijs[i,j] = vij[i] + ((deltaair[i]*P[j]/Pref))
             for k in range(len(v)):
                 x[i,j,k] = ((v[k]-vijs[i][j])/vD[i][j])
     print('x',x)
-
-    return 0
-
-#vijsとδairを削除
-del vijs,deltaair
+    return x
 
 #(4)y 
-def Voigt_y():
+def Voigt_y(vL,vD):
     y = np.empty((len(vij),len(T)))
     for i in range(len(vij)):
-        y[i,:] = (νL[i]/νD[i])
+        y[i,:] = (vL[i]/vD[i])
 
     print('y',y)
-
-    return 0
+    return y
 
 #Region separate
 # %%
-def K1_calc(x, y, z):
+def K1_calc(x, y, i):
     #Region1 　|x|+y >15 の領域
     a1 = 0.2820948*y + 0.5641896*y**3
     b1 = 0.5641896*y
@@ -141,7 +129,7 @@ def K1_calc(x, y, z):
 
     return (a1 + b1*x[:,:,i]**2)/(a2+b2*x[:,:,i]**2+x[:,:,i]**4)
 
-def K2_calc(x,y,z):
+def K2_calc(x,y,i):
     a3 = 1.05786*y + 4.65456*y**3 + 3.10304*y**5 + 0.56419*y**7
     b3 = 2.962*y + 0.56419*y**3 + 1.69257*y**5
     c3 = 1.69257*y**3 - 2.53885*y
@@ -153,7 +141,7 @@ def K2_calc(x,y,z):
 
     return (a3 + b3*x[:,:,i]**2 + c3*x[:,:,i]**4 + d3*x[:,:,i]**6) /(a4 + b4*x[:,:,i]**2 + c4*x[:,:,i]**4 + d4*x[:,:,i]**6 + x[:,:,i]**8)
 
-def K3_calc():
+def K3_calc(x,y,i):
     a5 = 272.102 + 973.778*y + 1629.76*y**2 + 1678.33*y**3 + 1174.8*y**4 + 581.746*y**5 + 204.501*y**6 + 49.5213*y**7 + 7.55895*y**8 + 0.564224*y**9
     b5 = -60.5644 -2.34403*y + 220.843*y**2 + 336.364*y**3 + 247.198*y**4 + 100.705*y**5 + 22.6778*y**6 + 2.25689*y**7
     c5 = 4.58029 + 18.546*y + 42.5683*y**2 + 52.8454*y**3 + 22.6798*y**4 + 3.38534*y**5
@@ -167,7 +155,7 @@ def K3_calc():
 
     return (a5 + b5*x[:,:,i]**2 + c5*x[:,:,i]**4 + d5*x[:,:,i]**6 + e5*x[:,:,i]**8 )/(a6+b6*x[:,:,i]**2+c6*x[:,:,i]**4 + d6*x[:,:,i]**6 + e6*x[:,:,i]**8 + x[:,:,i]**10)
 
-def K4_calc():
+def K4_calc(x,y,i):
     a7 = 1.16028e9*y - 9.86604e8*y**3 + 4.56662e8*y**5 - 1.53575e8*y**7 + 4.08168e7*y**9 - 9.69463e6*y**11 + 1.6841e6*y**13 - 320772*y**15 + 40649.2*y**17 - 5860.68*y**19 + 571.687*y**21 - 72.9359*y**23 + 2.35944*y**25 - 0.56419*y**27
     b7 = -5.60505e8*y - 9.85386e8*y**3 + 8.06985e8*y**5 - 2.91876e8*y**7 + 8.64829e7*y**9 - 7.72359e6*y**11 + 3.59915e6*y**13 - 234417*y**15 + 45251.3*y**17 - 2269.19*y**19 - 234.143*y**21 + 23.0312*y**23 - 7.33447*y**25
     c7 = -6.51523e8*y + 2.47157e8*y**3 + 2.94262e8*y**5 - 2.04467e8*y**7 + 2.29302e7*y**9 - 2.3818e7*y**11 + 576054*y**13 + 98079.1*y**15 - 25338.3*y**17 + 1097.77*y**19 + 97.6203*y**21 - 44.0068*y**23
@@ -203,7 +191,7 @@ def K4_calc():
 # %%
 #(5)Voigt function f(ν,p,T)
 #近似式導入 [M.Kuntz 1997 etal.]
-def Voigt():
+def Voigt(x,y,vD):
     #|x|+yの計算
     xy = np.empty((len(vij),len(T),len(v)))
     for i in range(len(v)):
@@ -223,19 +211,19 @@ def Voigt():
 
     for i in range(len(v)):
         #Region1 　|x|+y >15 の領域
-        K1[:,:,i] = K1_calc(x, y, z)
+        K1[:,:,i] = K1_calc(x, y, i)    # 波数方向のインデックスも渡す(i)
         print('第一近似',i)
 
         #Region2 　5.5 < |x|+y < 15の領域
-        K2[:,:,i] = K2_calc(x,y,z)
+        K2[:,:,i] = K2_calc(x,y,i)
         print('第二近似',i)
 
         #Region3　|x|+y < 5.5 and y > 0.195|x|-0.176
-        K3[:,:,i] = K3_calc(x,y,z)
+        K3[:,:,i] = K3_calc(x,y,i)
         print('第三近似',i)
 
         #Region4　|x|+y < 5.5 and y < 0.195|x|-0.176
-        K4[:,:,i] = K4_calc(x,y,z)
+        K4[:,:,i] = K4_calc(x,y,i)
         print('第4近似',i)
 
     #Region1〜Region4を満たす要素番号場所を検索
@@ -243,9 +231,6 @@ def Voigt():
     C2 = np.where((xy < 15) & (xy >5.5))
     C3 = np.where((xy <5.5) & (0 > x_y))
     C4 = np.where((xy <5.5) & (0 < x_y))
-
-    #xyとx_yを削除
-    del xy,x_y
 
     # %%
     #K1~K4の要素番号にC1のlistを代入
@@ -267,13 +252,10 @@ def Voigt():
     #KK1~KK4,K1~K4を削除
     del KK1,KK2,KK3,KK4,K1,K2,K3,K4
 
-    for i in range(len(ν)):
-        K[:,:,i] = K[:,:,i]/νD/np.sqrt(np.pi)
+    for i in range(len(v)):
+        K[:,:,i] = K[:,:,i]/vD/np.sqrt(np.pi)
 
-    return 0
-
-#νDとx,yを削除
-del νD
+    return K
 
 # %%
 #(6)吸収線強度S(T)
@@ -283,25 +265,19 @@ def Sintensity():
         S[i,:] = (Sij[i]*(Qref/QT)*((np.exp((-c2*E[i])/T))/(np.exp((-c2*E[i])/Tref)))*((1.0-np.exp((-c2*vij[i])/T))/(1-np.exp((-c2*vij[i])/Tref)))) #cm-1/(molecule-1 cm2)
     print('S',S)
 
-    return 0
-
-#EとSijを削除
-del Sij,E
+    return S
 # %%
 #(7)吸収係数σ(z, ν)
-def crosssection():
+def crosssection(S,K):
     sigma = np.empty((len(vij),len(T), len(v)))
     for i in range(len(v)):
         sigma[:,:,i] = S * K[:,:,i] #molecule-1 cm2 Voigt functionを使用して計算
     print('吸収係数',sigma)
 
-    return 0
-
-#SとKを削除
-del S,K
+    return sigma
 # %%
 #(8-1)光学的厚みτ(ν)：シングルライン計算
-def tau_absorption():
+def tau_absorption(sigma):
     tau = np.empty((len(vij),len(v)))
     for i in range(len(vij)):
         for k in range(len(v)):
@@ -317,33 +293,44 @@ def tau_absorption():
 #光学的厚みの足し合わせは、台形近似をして積分を行っている
 #(8-2)：マルチライン増やす(ラインバイライン計算)
     sumtau=np.sum(tau,axis=0)
+    tau_v=np.stack([v,sumtau],1)
+    np.savetxt('4545-5556_PT.txt',tau_v,fmt ='%.10e')
     print('光学的厚み',sumtau)
 
-    return 0
+    return sumtau
 
-tau_v=np.stack([v,sumtau],1)
-np.savetxt('4545-5556_PT.txt',tau_v,fmt ='%.10e')
+def main():
+    #(9)各高度の吸収線形 
+    #A = np.exp(-tau[i])
+    #print(A)
 
-#(9)各高度の吸収線形 
-#A = np.exp(-tau[i])
-#print(A)
+    #グラフ作成
+    #データ読み込み&定義
+    x1 = v
 
-#グラフ作成
-#データ読み込み&定義
-x1 = v
-y1 = sumtau
+    vL = Lorenz()
+    vD = Doppler()
+    x = Voigt_x(vD)
+    y = Voigt_y(vL,vD)
+    K = Voigt(x,y,vD)
+    S = Sintensity()
+    sigma = crosssection(S,K)
+    y1 = tau_absorption(sigma)
 
-fig = plt.figure()
-ax = fig.add_subplot(111, title='CO2')
-ax.grid(c='lightgray', zorder=1)
-ax.plot(x1, y1, color='b')
-ax.set_xlim(4973,4975)
-ax.set_yscale('log') 
-ax.set_xlabel('Wavenumber [$cm^{-1}$]', fontsize=14)
-plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
+    fig = plt.figure()
+    ax = fig.add_subplot(111, title='CO2')
+    ax.grid(c='lightgray', zorder=1)
+    ax.plot(x1, y1, color='b')
+    ax.set_xlim(4973,4975)
+    ax.set_yscale('log') 
+    ax.set_xlabel('Wavenumber [$cm^{-1}$]', fontsize=14)
+    plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
 
-#凡例
-h1, l1 = ax.get_legend_handles_labels()
-ax.legend(h1, l1, loc='lower right', fontsize=14)
-plt.show()
+    #凡例
+    h1, l1 = ax.get_legend_handles_labels()
+    ax.legend(h1, l1, loc='lower right', fontsize=14)
+    plt.show()
+
 # %%
+if __name__ == '__main__':
+    main()
