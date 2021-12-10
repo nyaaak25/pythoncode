@@ -25,6 +25,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from memory_profiler import profile
+import time
 
 Hitrandata = np.loadtxt('4971-4976_hitrandata.txt')
 vij = Hitrandata[:, 0]
@@ -59,7 +60,7 @@ QT = Q_CO2['Q']
 Qref = 286.09
 
 # Number Density
-mixCO2 = 0.953
+mixCO2 = 0.9532
 Pref = 1013250  # hPa(1atm) --> Ba
 R = 8.31E+7  # (g*cm^2*s^2)/(mol*K)
 Pself = mixCO2*P
@@ -69,7 +70,7 @@ nd = P / (k * T)
 # 波数幅：計算する波数を決定　変更するパラメータ
 # 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1, 1011
 # 最後まで使う
-v = np.empty(5001)
+v = np.zeros(5001)
 for i in range(5001):
     v[i] = 4971.000 + (0.001*i)
     # v[i] = 4545.0000+(1.00*i)
@@ -89,7 +90,6 @@ def Doppler(vijk):
 # (2)ローレンツ幅νL(p,T)
 
 
-@profile
 def Lorenz(nairk, gammaairk, gammaselfk):
     Pself = mixCO2*P  # 分圧
     vL = (((Tref/T)**nairk)*(gammaairk*(P-Pself) /
@@ -103,10 +103,9 @@ def Lorenz(nairk, gammaairk, gammaselfk):
 # (3)x
 
 
-@profile
 def Voigt_x(vijk, deltaairk, vDk):
-    x = np.empty(((len(T), len(v))))
-    vijs = np.empty((len(T)))
+    x = np.zeros(((len(T), len(v))))
+    vijs = np.zeros((len(T)))
     for i in range(len(T)):
         vijs[i] = vijk + ((deltaairk*P[i]/Pref))
         for j in range(len(v)):
@@ -171,7 +170,6 @@ def K3_calc(xki, yk):
     return (a5 + b5*xki**2 + c5*xki**4 + d5*xki**6 + e5*xki**8)/(a6+b6*xki**2+c6*xki**4 + d6*xki**6 + e6*xki**8 + xki**10)
 
 
-@profile
 def K4_calc(xki, yk):
     a7 = 1.16028e9*yk - 9.86604e8*yk**3 + 4.56662e8*yk**5 - 1.53575e8*yk**7 + 4.08168e7*yk**9 - 9.69463e6*yk**11 + 1.6841e6 * \
         yk**13 - 320772*yk**15 + 40649.2*yk**17 - 5860.68*yk**19 + 571.687 * \
@@ -242,28 +240,28 @@ def K4_calc(xki, yk):
 
 def Voigt(xk, yk, vDk):
     # |x|+yの計算
-    xy = np.empty((len(T), len(v)))
+    xy = np.zeros((len(T), len(v)))
     for i in range(len(v)):
         xy[:, i] = abs(xk[:, i])+yk
 
     # -y + 0.195|x|-0.176の計算
-    x_y = np.empty((len(T), len(v)))
+    x_y = np.zeros((len(T), len(v)))
     for i in range(len(v)):
         x_y[:, i] = -yk + 0.195*abs(xk[:, i]) - 0.176
     print(x_y)
 
     # %%
-    K1 = np.empty((len(T), len(v)))
-    K2 = np.empty((len(T), len(v)))
-    K3 = np.empty((len(T), len(v)))
-    K4 = np.empty((len(T), len(v)))
+    K1 = np.zeros((len(T), len(v)))
+    K2 = np.zeros((len(T), len(v)))
+    K3 = np.zeros((len(T), len(v)))
+    K4 = np.zeros((len(T), len(v)))
 
     for i in range(len(v)):
         xki = xk[:, i]   # 波数方向 i 番目の xk をスライス
 
         # Region1 　|x|+y >15 の領域
         K1[:, i] = K1_calc(xki, yk)    # 波数方向のインデックスも渡す(i)
-        print('第一近似', i)
+        # print('第一近似', i)
 
         # Region2 　5.5 < |x|+y < 15の領域
         K2[:, i] = K2_calc(xki, yk)
@@ -286,10 +284,10 @@ def Voigt(xk, yk, vDk):
     # %%
     # K1~K4の要素番号にC1のlistを代入
     # 初期化
-    KK1 = np.empty(K1.shape)
-    KK2 = np.empty(K2.shape)
-    KK3 = np.empty(K3.shape)
-    KK4 = np.empty(K4.shape)
+    KK1 = np.zeros(K1.shape)
+    KK2 = np.zeros(K2.shape)
+    KK3 = np.zeros(K3.shape)
+    KK4 = np.zeros(K4.shape)
 
     # 具体的な値を代入
     KK1[C1] = K1[C1]
@@ -312,7 +310,7 @@ def Voigt(xk, yk, vDk):
 # (6)吸収線強度S(T)
 
 
-def Sintensity(Sijk, Ek, vijk):
+def Sintensity(Ek, Sijk, vijk):
     S = (Sijk*(Qref/QT)*((np.exp((-c2*Ek)/T))/(np.exp((-c2*Ek)/Tref))) *
          ((1.0-np.exp((-c2*vijk)/T))/(1.0-np.exp((-c2*vijk)/Tref))))  # cm-1/(molecule-1 cm2)
     print('S', S)
@@ -323,7 +321,7 @@ def Sintensity(Sijk, Ek, vijk):
 
 
 def crosssection(Sk, Kk):
-    sigma = np.empty((len(T), len(v)))
+    sigma = np.zeros((len(T), len(v)))
     for i in range(len(v)):
         sigma[:, i] = Sk * Kk[:, i]  # molecule-1 cm2 Voigt functionを使用して計算
     print('吸収係数', sigma)
@@ -333,9 +331,8 @@ def crosssection(Sk, Kk):
 
 # %%
 # (8-1)光学的厚みτ(ν)：シングルライン計算
-@ profile
 def tau_absorption(sigmak):
-    tau = np.empty((len(v)))
+    tau = np.zeros((len(v)))
     for i in range(len(v)):
         for j in range(len(T)):
             if j == 0:
@@ -348,10 +345,10 @@ def tau_absorption(sigmak):
 # 適当な温度と適当な温度を使って線の広がりを見る
 # 光学的厚みの足し合わせは、台形近似をして積分を行っている
 # (8-2)：マルチライン増やす(ラインバイライン計算)
-    sumtau = np.sum(tau, axis=0)
-    print('光学的厚み', sumtau)
+    #sumtau = np.sum(tau, axis=0)
+    print('光学的厚み', tau)
 
-    return sumtau
+    return tau
 
 
 @ profile
@@ -366,7 +363,9 @@ def main():
 
     # 吸収線の要素番号(k)でループ
     tausum = np.zeros((len(v)))
+
     for k in range(len(vij)):
+        start = time.time()
         vijk = vij[k]
         Sijk = Sij[k]
         gammaselfk = gammaself[k]
@@ -375,15 +374,18 @@ def main():
         nairk = nair[k]
         deltaairk = deltaair[k]
         vDk = Doppler(vijk)
-        vLk = Lorenz(nairk, gammaselfk, gammaairk)
+        vLk = Lorenz(nairk, gammaairk, gammaselfk)
         xk = Voigt_x(vijk, deltaairk, vDk)
-        yk = Voigt_y(vDk, vLk)
+        yk = Voigt_y(vLk, vDk)
         Kk = Voigt(xk, yk, vDk)
         Sk = Sintensity(Ek, Sijk, vijk)
         sigmak = crosssection(Sk, Kk)
         tauk = tau_absorption(sigmak)
+        print(tauk)
 
         tausum += tauk
+        print('1ループの所要時間: ', time.time()-start)
+        print('今なんループ？', k)
 
     # ループなしパターン
     """

@@ -19,7 +19,7 @@ import pandas as pd
 τ = τ_txt[2000:4001, 1]
 
 # 光学的厚み
-tau_txt = np.loadtxt('new_4971-4976_voigt_test.txt')
+tau_txt = np.loadtxt('4545-5556_Test.txt')
 tau = tau_txt[2000:4001, 1]
 
 # 透過率
@@ -28,8 +28,7 @@ A = np.exp(-τ)
 # 佐藤さんスペクトル(encordingの　cp932/utf-8)
 # Sato = pd.read_csv(filepath_or_buffer="Sato_spectrum.csv", encoding="cp932", sep=",")
 # Sato = pd.read_csv(filepath_or_buffer="Sato_spectrum_sumtau.csv", encoding="utf-8", sep=",")
-Sato1 = pd.read_csv(filepath_or_buffer="Satosan-kensyou.csv",
-                    encoding="cp932", sep=",")
+# Sato1 = pd.read_csv(filepath_or_buffer="Satosan-kensyou.csv",encoding = "cp932", sep = ",")
 
 # Sato_spectrum.csvのファイルopen、4973.86のシングルライン検証用
 # Satoν=Sato['波数(cm-1)']
@@ -39,15 +38,15 @@ Sato1 = pd.read_csv(filepath_or_buffer="Satosan-kensyou.csv",
 # Sato_spectrum_sum.csvファイル openの際のもの
 # Satoν=Sato['波数']
 # Satoallτ=Sato['光学的厚さ(all)']
-#SatoallAA=Sato['透過率 (all)']
-#Sato21τ=Sato['光学的厚さ (only 21)']
-#Sato21AA=Sato['透過率 (only 21)']
+# SatoallAA=Sato['透過率 (all)']
+# Sato21τ=Sato['光学的厚さ (only 21)']
+# Sato21AA=Sato['透過率 (only 21)']
 
 # Sato_spectrum_sum.csvファイル openの際のもの
-Satov = Sato1['波数']
-Satoτ_python = Sato1['光学的厚さpython']
-Satoτ_for = Sato1['光学的厚さfor']
-Sato_gosa = Sato1['誤差']
+# Satov = Sato1['波数']
+# Satoτ_python = Sato1['光学的厚さpython']
+# Satoτ_for = Sato1['光学的厚さfor']
+# Sato_gosa = Sato1['誤差']
 
 
 # %%
@@ -56,7 +55,7 @@ Sato_gosa = Sato1['誤差']
 # DDD=((τ-Satoτ_for[0:2001])/Satoτ_for[0:2001])*100  #(風間ー佐藤さん)*100/佐藤さん
 DDD = (τ-tau)*100/tau
 # AAA = ((A-Sato21AA)/Sato21AA)*100 #(風間ー佐藤さん)*100/佐藤さん
-#AAA = A-Sato21AA
+# AAA = A-Sato21AA
 
 x1 = ν
 y1 = DDD
@@ -65,14 +64,14 @@ fig = plt.figure()
 ax = fig.add_subplot(111, title='CO2')
 ax.grid(c='lightgray', zorder=1)
 ax.plot(x1, y1, color='red', label="Voigt-Kinji")
-#ax.plot(x1, τ, color='b',label="Kinji")
-#ax.plot(x1, tau, color='red',label="Voigt")
+# ax.plot(x1, τ, color='b',label="Kinji")
+# ax.plot(x1, tau, color='red',label="Voigt")
 ax.set_xlim(4973, 4975)
 # ax.set_yscale('log')
 ax.set_xlabel('Wavenumber [$cm^{-1}$]', fontsize=14)
-#ax.set_ylabel('error (%)', fontsize=14)
-#ax.set_ylabel('Optical Depth', fontsize=14)
-#ax.set_ylabel('Transmittance', fontsize=14)
+# ax.set_ylabel('error (%)', fontsize=14)
+# ax.set_ylabel('Optical Depth', fontsize=14)
+# ax.set_ylabel('Transmittance', fontsize=14)
 plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
 
 # ax.plot(Satoν,Satoallτ,color='r')
