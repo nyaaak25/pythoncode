@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # 波数
-ν_txt = np.loadtxt('new_4971-4976_kinji_2.txt')
-ν = ν_txt[2000:4001, 0]
+ν_txt = np.loadtxt('4545-5556_Test.txt')
+ν = ν_txt[:, 0]
 
 # 光学的厚み
 τ_txt = np.loadtxt('new_4971-4976_kinji_2.txt')
@@ -20,7 +20,7 @@ import pandas as pd
 
 # 光学的厚み
 tau_txt = np.loadtxt('4545-5556_Test.txt')
-tau = tau_txt[2000:4001, 1]
+tau = tau_txt[:, 1]
 
 # 透過率
 A = np.exp(-τ)
@@ -53,12 +53,12 @@ A = np.exp(-τ)
 # ---------------グラフ作成----------------------------------------------
 # データ読み込み&定義
 # DDD=((τ-Satoτ_for[0:2001])/Satoτ_for[0:2001])*100  #(風間ー佐藤さん)*100/佐藤さん
-DDD = (τ-tau)*100/tau
+#DDD = (τ-tau)*100/tau
 # AAA = ((A-Sato21AA)/Sato21AA)*100 #(風間ー佐藤さん)*100/佐藤さん
 # AAA = A-Sato21AA
 
 x1 = ν
-y1 = DDD
+y1 = tau
 
 fig = plt.figure()
 ax = fig.add_subplot(111, title='CO2')
@@ -66,7 +66,7 @@ ax.grid(c='lightgray', zorder=1)
 ax.plot(x1, y1, color='red', label="Voigt-Kinji")
 # ax.plot(x1, τ, color='b',label="Kinji")
 # ax.plot(x1, tau, color='red',label="Voigt")
-ax.set_xlim(4973, 4975)
+#ax.set_xlim(4973, 4975)
 # ax.set_yscale('log')
 ax.set_xlabel('Wavenumber [$cm^{-1}$]', fontsize=14)
 # ax.set_ylabel('error (%)', fontsize=14)

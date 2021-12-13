@@ -27,7 +27,7 @@ import pandas as pd
 from memory_profiler import profile
 import time
 
-Hitrandata = np.loadtxt('4971-4976_hitrandata.txt')
+Hitrandata = np.loadtxt('4545-5556_hitrandata.txt')
 vij = Hitrandata[:, 0]
 Sij = Hitrandata[:, 1]
 gammaair = Hitrandata[:, 3]
@@ -70,9 +70,9 @@ nd = P / (k * T)
 # 波数幅：計算する波数を決定　変更するパラメータ
 # 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1, 1011
 # 最後まで使う
-v = np.zeros(5001)
-for i in range(5001):
-    v[i] = 4971.000 + (0.001*i)
+v = np.zeros(1011000)
+for i in range(1011000):
+    v[i] = 4545.000 + (0.001*i)
     # v[i] = 4545.0000+(1.00*i)
 print('波数', v)
 
@@ -403,14 +403,14 @@ def main():
     ax = fig.add_subplot(111, title='CO2')
     ax.grid(c='lightgray', zorder=1)
     ax.plot(x1, y1, color='b')
-    ax.set_xlim(4973, 4975)
+    # ax.set_xlim(4973, 4975)
     ax.set_yscale('log')
     ax.set_xlabel('Wavenumber [$cm^{-1}$]', fontsize=14)
     plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
 
     # データセーブ
     tau_v = np.stack([v, tausum], 1)
-    np.savetxt('4545-5556_Test.txt', tau_v, fmt='%.10e')
+    np.savetxt('4545-5556_0.001step.txt', tau_v, fmt='%.10e')
 
     # 凡例
     h1, l1 = ax.get_legend_handles_labels()
