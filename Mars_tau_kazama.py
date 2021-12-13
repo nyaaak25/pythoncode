@@ -57,6 +57,7 @@ P = (P_txt[:, 2])*10  # Pa⇒Barye
 # Q(T)　温度によって変更、ここのInputfileの計算は別プログラム(Qcaluculation.py)
 Q_CO2 = pd.read_csv(filepath_or_buffer="CO2_Q.csv", encoding="cp932", sep=",")
 QT = Q_CO2['Q']
+QT = QT.to_numpy()
 Qref = 286.09
 
 # Number Density
@@ -106,10 +107,9 @@ def Lorenz(nairk, gammaairk, gammaselfk):
 def Voigt_x(vijk, deltaairk, vDk):
     x = np.zeros(((len(T), len(v))))
     vijs = np.zeros((len(T)))
-    for i in range(len(T)):
-        vijs[i] = vijk + ((deltaairk*P[i]/Pref))
-        for j in range(len(v)):
-            x[i, j] = ((v[j]-vijs[i])/vDk[i])
+    vijs = vijk + ((deltaairk*P/Pref))
+    for i in range(len(v)):
+        x[:, i] = ((v[i]-vijs)/vDk)
     print('x', x)
     return x
 
@@ -125,17 +125,18 @@ def Voigt_y(vLk, vDk):
 
 # Region separate
 # %%
-def K1_calc(xki, yk):
+def K1_calc(xk, yk):
     # Region1 　|x|+y >15 の領域
     a1 = 0.2820948*yk + 0.5641896*yk**3
     b1 = 0.5641896*yk
     a2 = 0.5 + yk**2 + yk**4
     b2 = -1 + 2*yk**2
 
-    return (a1 + b1*xki**2)/(a2+b2*xki**2+xki**4)
+    # return (a1 + b1*xki**2)/(a2+b2*xki**2+xki**4)
+    return ((a1 + b1*xk.T**2)/(a2+b2*xk.T**2+xk.T**4)).T
 
 
-def K2_calc(xki, yk):
+def K2_calc(xk, yk):
     a3 = 1.05786*yk + 4.65456*yk**3 + 3.10304*yk**5 + 0.56419*yk**7
     b3 = 2.962*yk + 0.56419*yk**3 + 1.69257*yk**5
     c3 = 1.69257*yk**3 - 2.53885*yk
@@ -145,10 +146,11 @@ def K2_calc(xki, yk):
     c4 = 10.5 - 6*yk**2 + 6*yk**4
     d4 = -6 + 4*yk**2
 
-    return (a3 + b3*xki**2 + c3*xki**4 + d3*xki**6) / (a4 + b4*xki**2 + c4*xki**4 + d4*xki**6 + xki**8)
+    # return (a3 + b3*xki**2 + c3*xki**4 + d3*xki**6) / (a4 + b4*xki**2 + c4*xki**4 + d4*xki**6 + xki**8)
+    return ((a3 + b3*xk.T**2 + c3*xk.T**4 + d3*xk.T**6) / (a4 + b4*xk.T**2 + c4*xk.T**4 + d4*xk.T**6 + xk.T**8)).T
 
 
-def K3_calc(xki, yk):
+def K3_calc(xk, yk):
     a5 = 272.102 + 973.778*yk + 1629.76*yk**2 + 1678.33*yk**3 + 1174.8*yk**4 + \
         581.746*yk**5 + 204.501*yk**6 + 49.5213*yk**7 + 7.55895*yk**8 + 0.564224*yk**9
     b5 = -60.5644 - 2.34403*yk + 220.843*yk**2 + 336.364*yk**3 + \
@@ -167,10 +169,11 @@ def K3_calc(xki, yk):
     d6 = 22.0353 + 55.0293*yk + 92.7568*yk**2 + 53.5952*yk**3 + 10*yk**4
     e6 = 1.49645 + 13.3988*yk + 5*yk**2
 
-    return (a5 + b5*xki**2 + c5*xki**4 + d5*xki**6 + e5*xki**8)/(a6+b6*xki**2+c6*xki**4 + d6*xki**6 + e6*xki**8 + xki**10)
+    # return (a5 + b5*xki**2 + c5*xki**4 + d5*xki**6 + e5*xki**8)/(a6+b6*xki**2+c6*xki**4 + d6*xki**6 + e6*xki**8 + xki**10)
+    return ((a5 + b5*xk.T**2 + c5*xk.T**4 + d5*xk.T**6 + e5*xk.T**8)/(a6+b6*xk.T**2+c6*xk.T**4 + d6*xk.T**6 + e6*xk.T**8 + xk.T**10)).T
 
 
-def K4_calc(xki, yk):
+def K4_calc(xk, yk):
     a7 = 1.16028e9*yk - 9.86604e8*yk**3 + 4.56662e8*yk**5 - 1.53575e8*yk**7 + 4.08168e7*yk**9 - 9.69463e6*yk**11 + 1.6841e6 * \
         yk**13 - 320772*yk**15 + 40649.2*yk**17 - 5860.68*yk**19 + 571.687 * \
         yk**21 - 72.9359*yk**23 + 2.35944*yk**25 - 0.56419*yk**27
@@ -231,7 +234,7 @@ def K4_calc(xki, yk):
     s8 = 126.532 + 40.5117*yk**2 + 91*yk**4
     t8 = 3.68288 + 14*yk**2
 
-    return (np.exp(yk**2) / np.exp(xki**2)) * np.cos(2*xki*yk) - ((a7 + b7*xki**2 + c7*xki**4 + d7*xki**6 + e7*xki**8 + f7*xki**10 + g7*xki**12 + h7*xki**14 + o7*xki**16 + p7*xki**18 + q7*xki**20 + r7*xki**22 + s7*xki**24 + t7*xki**26)/(a8+b8*xki**2+c8*(xki)**4 + d8*xki**6 + e8*xki**8 + f8*xki**10 + g8*xki**12 + h8*xki**14 + o8*xki**16 + p8*xki**18 + q8*xki**20 + r8*xki**22 + s8*xki**24 + t8*xki**26 + xki**28))
+    return ((np.exp(yk**2) / np.exp(xk.T**2)) * np.cos(2*xk.T*yk) - ((a7 + b7*xk.T**2 + c7*xk.T**4 + d7*xk.T**6 + e7*xk.T**8 + f7*xk.T**10 + g7*xk.T**12 + h7*xk.T**14 + o7*xk.T**16 + p7*xk.T**18 + q7*xk.T**20 + r7*xk.T**22 + s7*xk.T**24 + t7*xk.T**26)/(a8+b8*xk.T**2+c8*(xk.T)**4 + d8*xk.T**6 + e8*xk.T**8 + f8*xk.T**10 + g8*xk.T**12 + h8*xk.T**14 + o8*xk.T**16 + p8*xk.T**18 + q8*xk.T**20 + r8*xk.T**22 + s8*xk.T**24 + t8*xk.T**26 + xk.T**28))).T
 
 
 # %%
@@ -239,24 +242,31 @@ def K4_calc(xki, yk):
 # 近似式導入 [M.Kuntz 1997 etal.]
 
 def Voigt(xk, yk, vDk):
-    # |x|+yの計算
+    # |x|+yの計算   # K1, K2, ... の計算部分と同じループに入れる
     xy = np.zeros((len(T), len(v)))
     for i in range(len(v)):
         xy[:, i] = abs(xk[:, i])+yk
 
-    # -y + 0.195|x|-0.176の計算
+    # -y + 0.195|x|-0.176の計算 # K1, K2, ... の計算部分と同じループに入れる
     x_y = np.zeros((len(T), len(v)))
     for i in range(len(v)):
         x_y[:, i] = -yk + 0.195*abs(xk[:, i]) - 0.176
     print(x_y)
 
-    # %%
     K1 = np.zeros((len(T), len(v)))
     K2 = np.zeros((len(T), len(v)))
     K3 = np.zeros((len(T), len(v)))
     K4 = np.zeros((len(T), len(v)))
 
+    K1 = K1_calc(xk, yk)
+    K2 = K2_calc(xk, yk)
+    K3 = K3_calc(xk, yk)
+    K4 = K4_calc(xk, yk)
+
+    """
     for i in range(len(v)):
+        loopstart = time.time()  # ループ開始時刻
+
         xki = xk[:, i]   # 波数方向 i 番目の xk をスライス
 
         # Region1 　|x|+y >15 の領域
@@ -274,6 +284,11 @@ def Voigt(xk, yk, vDk):
         # Region4　|x|+y < 5.5 and y < 0.195|x|-0.176
         K4[:, i] = K4_calc(xki, yk)
         # print('第4近似', i)
+
+        if i % 10000 == 0:  # ループにかかる時間を出力(1万回に1度)
+            print('loop time: ', time.time()-loopstart)
+
+        """
 
     # Region1〜Region4を満たす要素番号場所を検索
     C1 = np.where(xy > 15)
@@ -301,8 +316,9 @@ def Voigt(xk, yk, vDk):
     # KK1~KK4,K1~K4を削除
     del KK1, KK2, KK3, KK4, K1, K2, K3, K4
 
-    for i in range(len(v)):
-        K[:, i] = K[:, i]/vDk/np.sqrt(np.pi)
+    K = (1/vDk)*(K.T)/np.sqrt(np.pi)
+
+    K = (K.T)
 
     return K
 
@@ -322,11 +338,11 @@ def Sintensity(Ek, Sijk, vijk):
 
 def crosssection(Sk, Kk):
     sigma = np.zeros((len(T), len(v)))
-    for i in range(len(v)):
-        sigma[:, i] = Sk * Kk[:, i]  # molecule-1 cm2 Voigt functionを使用して計算
+    sigma = Sk * Kk.T  # molecule-1 cm2 Voigt functionを使用して計算
+    # sigma = sigma.T
     print('吸収係数', sigma)
 
-    return sigma
+    return sigma.T
 
 
 # %%
@@ -345,7 +361,7 @@ def tau_absorption(sigmak):
 # 適当な温度と適当な温度を使って線の広がりを見る
 # 光学的厚みの足し合わせは、台形近似をして積分を行っている
 # (8-2)：マルチライン増やす(ラインバイライン計算)
-    #sumtau = np.sum(tau, axis=0)
+    # sumtau = np.sum(tau, axis=0)
     print('光学的厚み', tau)
 
     return tau
