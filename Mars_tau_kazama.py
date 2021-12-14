@@ -69,7 +69,7 @@ Pself = mixCO2*P
 nd = P / (k * T)
 
 # 波数幅：計算する波数を決定　変更するパラメータ
-# 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1, 1011
+# 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1, 1011000(0.001Step)
 # 最後まで使う
 v = np.zeros(1011000)
 for i in range(1011000):
@@ -108,8 +108,11 @@ def Voigt_x(vijk, deltaairk, vDk):
     x = np.zeros(((len(T), len(v))))
     vijs = np.zeros((len(T)))
     vijs = vijk + ((deltaairk*P/Pref))
-    for i in range(len(v)):
-        x[:, i] = ((v[i]-vijs)/vDk)
+
+    v_new = np.repeat(v[None, :], 31, axis=0)
+    x = (v_new.T-vijs)/vDk
+    x = x.T
+
     print('x', x)
     return x
 
@@ -244,13 +247,13 @@ def K4_calc(xk, yk):
 def Voigt(xk, yk, vDk):
     # |x|+yの計算   # K1, K2, ... の計算部分と同じループに入れる
     xy = np.zeros((len(T), len(v)))
-    for i in range(len(v)):
-        xy[:, i] = abs(xk[:, i])+yk
+    xy = np.abs(xk.T)+yk
+    xy = xy.T
 
     # -y + 0.195|x|-0.176の計算 # K1, K2, ... の計算部分と同じループに入れる
     x_y = np.zeros((len(T), len(v)))
-    for i in range(len(v)):
-        x_y[:, i] = -yk + 0.195*abs(xk[:, i]) - 0.176
+    x_y = -yk + 0.195*np.abs(xk.T) - 0.176
+    x_y = x_y.T
     print(x_y)
 
     K1 = np.zeros((len(T), len(v)))
@@ -349,14 +352,13 @@ def crosssection(Sk, Kk):
 # (8-1)光学的厚みτ(ν)：シングルライン計算
 def tau_absorption(sigmak):
     tau = np.zeros((len(v)))
-    for i in range(len(v)):
-        for j in range(len(T)):
-            if j == 0:
-                tau[i] = 0.5 * sigmak[j, i]*nd[j]*mixCO2*(2e5)
-            elif j == len(T)-1:
-                tau[i] += 0.5 * sigmak[j, i] * nd[j] * mixCO2 * (2e5)
-            else:
-                tau[i] += 0.5 * sigmak[j, i]*nd[j] * mixCO2 * (4e5)
+    for j in range(len(T)):
+        if j == 0:
+            tau = 0.5 * sigmak[j, :]*nd[j]*mixCO2*(2e5)
+        elif j == len(T)-1:
+            tau += 0.5 * sigmak[j, :] * nd[j] * mixCO2 * (2e5)
+        else:
+            tau += 0.5 * sigmak[j, :]*nd[j] * mixCO2 * (4e5)
 
 # 適当な温度と適当な温度を使って線の広がりを見る
 # 光学的厚みの足し合わせは、台形近似をして積分を行っている
@@ -391,7 +393,10 @@ def main():
         deltaairk = deltaair[k]
         vDk = Doppler(vijk)
         vLk = Lorenz(nairk, gammaairk, gammaselfk)
+        loopstart = time.time()
         xk = Voigt_x(vijk, deltaairk, vDk)
+        if k % 5000 == 0:  # ループにかかる時間を出力(5000回に1度)
+            print('loop time: ', time.time()-loopstart)
         yk = Voigt_y(vLk, vDk)
         Kk = Voigt(xk, yk, vDk)
         Sk = Sintensity(Ek, Sijk, vijk)
