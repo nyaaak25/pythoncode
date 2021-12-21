@@ -11,20 +11,22 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # 波数
-ν_txt = np.loadtxt('4971-4976_0.001step.txt')
+ν_txt = np.loadtxt('4545-5556_0.01step.txt')
 ν = ν_txt[:, 0]
 
 # 光学的厚み
 # τ_txt = np.loadtxt('new_4971-4976_kinji_2.txt')
-τ_txt = np.loadtxt('4545-5556_Test.txt')
-τ = τ_txt[426:431, 1]
+τ_txt = np.loadtxt('4545-5556_0.01step_hapiCalc.txt')
+τ = τ_txt[:, 1] * 7e24
+# τ_txt = np.loadtxt('4545-5556_Test.txt')
+# τ  = τ_txt[426:431, 1]
 
 # 光学的厚み
-tau_txt = np.loadtxt('4971-4976_0.001step.txt')
+tau_txt = np.loadtxt('4545-5556_0.01step.txt')
 tau = tau_txt[:, 1]
 
 # 透過率
-A = np.exp(-τ)
+A = np.exp(-tau)
 
 # 佐藤さんスペクトル(encordingの　cp932/utf-8)
 # Sato = pd.read_csv(filepath_or_buffer="Sato_spectrum.csv", encoding="cp932", sep=",")
@@ -54,24 +56,27 @@ A = np.exp(-τ)
 # ---------------グラフ作成----------------------------------------------
 # データ読み込み&定義
 # DDD=((τ-Satoτ_for[0:2001])/Satoτ_for[0:2001])*100  #(風間ー佐藤さん)*100/佐藤さん
-DDD = (τ-tau)*100/tau
+# DDD = (τ-tau)*100/tau
 # AAA = ((A-Sato21AA)/Sato21AA)*100 #(風間ー佐藤さん)*100/佐藤さん
 # AAA = A-Sato21AA
 
 x1 = ν
-y1 = DDD
+x2 = τ_txt[:, 0]
+y1 = tau
 
 fig = plt.figure()
 ax = fig.add_subplot(111, title='CO2')
 ax.grid(c='lightgray', zorder=1)
-ax.plot(x1, y1, color='green', label="Voigt-Kinji")
-ax.plot(x1, τ, color='b', label="Kinji")
-ax.plot(x1, tau, color='red', label="Voigt")
-# ax.set_xlim(4973, 4975)
-ax.set_yscale('log')
+ax.plot(x2, τ, color='yellow', label="absorption coefficients")
+ax.plot(x1, y1, color='green', label="optical depth")
+# ax.plot(x1, tau, color='red', label="Voigt")
+ax.set_xlim(4920, 5020)
+# ax.set_ylim(0, 10000)
+# ax.set_yscale('log')
 ax.set_xlabel('Wavenumber [$cm^{-1}$]', fontsize=14)
 # ax.set_ylabel('error (%)', fontsize=14)
-# ax.set_ylabel('Optical Depth', fontsize=14)
+ax.set_ylabel(
+    'comparision of absorption coefficients and Optical Depth', fontsize=8)
 # ax.set_ylabel('Transmittance', fontsize=14)
 plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
 
@@ -83,7 +88,7 @@ plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
 
 # 凡例
 h1, l1 = ax.get_legend_handles_labels()
-ax.legend(h1, l1, loc='upper right', fontsize=8)
+ax.legend(h1, l1, loc='upper right', fontsize=6)
 plt.show()
 
 # %%

@@ -71,11 +71,11 @@ nd = P / (k * T)
 # 波数幅：計算する波数を決定　変更するパラメータ
 # 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1, 1011000(0.001Step)
 # 最後まで使う
-v = np.zeros(1011000)
-for i in range(1011000):
+v = np.zeros(1001000)
+for i in range(1001000):
     v[i] = 4545.000 + (0.001*i)
     # v[i] = 4545.0000+(1.00*i)
-print('波数', v)
+# print('波数', v)
 
 # (1)ドップラー幅νD(T)
 # Voigt functionの計算まで使用
@@ -83,7 +83,7 @@ print('波数', v)
 
 def Doppler(vijk):
     vD = ((vijk/c)*((2*k*T*Na)/M)**(1/2))  # cm-1
-    print('ドップラー幅', vD)
+    # print('ドップラー幅', vD)
 
     return vD
 
@@ -95,7 +95,7 @@ def Lorenz(nairk, gammaairk, gammaselfk):
     Pself = mixCO2*P  # 分圧
     vL = (((Tref/T)**nairk)*(gammaairk*(P-Pself) /
           Pref+gammaselfk*Pself/Pref))  # cm-1
-    print('ローレンツ幅', vL)
+    # print('ローレンツ幅', vL)
 
     return vL
 # nyo=np.stack([νD,νL],1)
@@ -122,7 +122,7 @@ def Voigt_x(vijk, deltaairk, vDk):
 def Voigt_y(vLk, vDk):
     y = vLk/vDk
 
-    print('y', y)
+    # print('y', y)
     return y
 
 
@@ -381,6 +381,7 @@ def main():
 
     # 吸収線の要素番号(k)でループ
     tausum = np.zeros((len(v)))
+    crosssum = np.zeros((len(v)))
 
     for k in range(len(vij)):
         start = time.time()
@@ -418,6 +419,7 @@ def main():
     S = Sintensity()
     sigma = crosssection(S, K)
     """
+
     y1 = tausum
 
     fig = plt.figure()
@@ -431,7 +433,7 @@ def main():
 
     # データセーブ
     tau_v = np.stack([v, tausum], 1)
-    np.savetxt('4545-5556_0.001step.txt', tau_v, fmt='%.10e')
+    np.savetxt('4545-5556_0.01step.txt', tau_v, fmt='%.10e')
 
     # 凡例
     h1, l1 = ax.get_legend_handles_labels()
