@@ -1,31 +1,31 @@
-# %%
-# -*- coding: utf-8 -*-
 
 """
+-*- coding: utf-8 -*-
 光学的厚みを計算させるプログラム
-
 Created on Sun Apr 20 15:32:00 2021
 @author: Suzuki
 
+@author: A.Kazama kazama@pparc.gp.tohoku.ac.jp
 ver.2 マルチスペクトルをVoigt functionをベタに計算させて導出プログラムを作成
 Created on Wed Sep 1 11:21:00 2021
-@author：A.Kazama
 
-ver.2.1：Voigt functonに多項式近似を導入
+ver.2.1: Voigt functonに多項式近似を導入
 created on Sat Oct 16 21:00:00 2021
-@author：A.Kazama
 
 ver. 3.0: classを導入
 created on Mon Dec 6 9:42:00 2021
-@author : A. Kazama
+
+ver. 3.1: 並列化を導入
+created on Tue Dec 21 11:43:00 2021
 """
-# %%
+
 # インポート
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from memory_profiler import profile
 import time
+from numba import jit
 
 Hitrandata = np.loadtxt('4545-5556_hitrandata.txt')
 vij = Hitrandata[:, 0]
@@ -81,6 +81,7 @@ for i in range(1001000):
 # Voigt functionの計算まで使用
 
 
+@jit
 def Doppler(vijk):
     vD = ((vijk/c)*((2*k*T*Na)/M)**(1/2))  # cm-1
     # print('ドップラー幅', vD)
@@ -91,6 +92,7 @@ def Doppler(vijk):
 # (2)ローレンツ幅νL(p,T)
 
 
+@jit
 def Lorenz(nairk, gammaairk, gammaselfk):
     Pself = mixCO2*P  # 分圧
     vL = (((Tref/T)**nairk)*(gammaairk*(P-Pself) /
@@ -100,10 +102,11 @@ def Lorenz(nairk, gammaairk, gammaselfk):
     return vL
 # nyo=np.stack([νD,νL],1)
 # np.savetxt('doppler_lorentzian.dat',nyo)
-# %%
+
 # (3)x
 
 
+@jit
 def Voigt_x(vijk, deltaairk, vDk):
     x = np.zeros(((len(T), len(v))))
     vijs = np.zeros((len(T)))
@@ -119,6 +122,7 @@ def Voigt_x(vijk, deltaairk, vDk):
 # (4)y
 
 
+@jit
 def Voigt_y(vLk, vDk):
     y = vLk/vDk
 
@@ -127,7 +131,7 @@ def Voigt_y(vLk, vDk):
 
 
 # Region separate
-# %%
+@jit
 def K1_calc(xk, yk):
     # Region1 　|x|+y >15 の領域
     a1 = 0.2820948*yk + 0.5641896*yk**3
@@ -139,6 +143,7 @@ def K1_calc(xk, yk):
     return ((a1 + b1*xk.T**2)/(a2+b2*xk.T**2+xk.T**4)).T
 
 
+@jit
 def K2_calc(xk, yk):
     a3 = 1.05786*yk + 4.65456*yk**3 + 3.10304*yk**5 + 0.56419*yk**7
     b3 = 2.962*yk + 0.56419*yk**3 + 1.69257*yk**5
@@ -153,6 +158,7 @@ def K2_calc(xk, yk):
     return ((a3 + b3*xk.T**2 + c3*xk.T**4 + d3*xk.T**6) / (a4 + b4*xk.T**2 + c4*xk.T**4 + d4*xk.T**6 + xk.T**8)).T
 
 
+@jit
 def K3_calc(xk, yk):
     a5 = 272.102 + 973.778*yk + 1629.76*yk**2 + 1678.33*yk**3 + 1174.8*yk**4 + \
         581.746*yk**5 + 204.501*yk**6 + 49.5213*yk**7 + 7.55895*yk**8 + 0.564224*yk**9
@@ -176,6 +182,7 @@ def K3_calc(xk, yk):
     return ((a5 + b5*xk.T**2 + c5*xk.T**4 + d5*xk.T**6 + e5*xk.T**8)/(a6+b6*xk.T**2+c6*xk.T**4 + d6*xk.T**6 + e6*xk.T**8 + xk.T**10)).T
 
 
+@jit
 def K4_calc(xk, yk):
     a7 = 1.16028e9*yk - 9.86604e8*yk**3 + 4.56662e8*yk**5 - 1.53575e8*yk**7 + 4.08168e7*yk**9 - 9.69463e6*yk**11 + 1.6841e6 * \
         yk**13 - 320772*yk**15 + 40649.2*yk**17 - 5860.68*yk**19 + 571.687 * \
@@ -243,7 +250,7 @@ def K4_calc(xk, yk):
 # %%
 # (5)Voigt function f(ν,p,T)
 # 近似式導入 [M.Kuntz 1997 etal.]
-
+@jit
 def Voigt(xk, yk, vDk):
     # |x|+yの計算   # K1, K2, ... の計算部分と同じループに入れる
     xy = np.zeros((len(T), len(v)))
@@ -329,6 +336,7 @@ def Voigt(xk, yk, vDk):
 # (6)吸収線強度S(T)
 
 
+@jit
 def Sintensity(Ek, Sijk, vijk):
     S = (Sijk*(Qref/QT)*((np.exp((-c2*Ek)/T))/(np.exp((-c2*Ek)/Tref))) *
          ((1.0-np.exp((-c2*vijk)/T))/(1.0-np.exp((-c2*vijk)/Tref))))  # cm-1/(molecule-1 cm2)
@@ -339,6 +347,7 @@ def Sintensity(Ek, Sijk, vijk):
 # (7)吸収係数σ(z, ν)
 
 
+@jit
 def crosssection(Sk, Kk):
     sigma = np.zeros((len(T), len(v)))
     sigma = Sk * Kk.T  # molecule-1 cm2 Voigt functionを使用して計算
@@ -350,6 +359,7 @@ def crosssection(Sk, Kk):
 
 # %%
 # (8-1)光学的厚みτ(ν)：シングルライン計算
+@jit
 def tau_absorption(sigmak):
     tau = np.zeros((len(v)))
     for j in range(len(T)):
@@ -369,6 +379,7 @@ def tau_absorption(sigmak):
     return tau
 
 
+@jit
 @ profile
 def main():
     # (9)各高度の吸収線形
