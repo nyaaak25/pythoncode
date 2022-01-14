@@ -6,23 +6,21 @@
 
 # import
 import numpy as np
-import scipy.integrate as integrate
 import matplotlib.pyplot as plt
-import pandas as pd
 
 # 波数
-ν_txt = np.loadtxt('4545-5556_0.01step.txt')
+ν_txt = np.loadtxt('4545-5556_0.001step.txt')
 ν = ν_txt[:, 0]
 
 # 光学的厚み
 # τ_txt = np.loadtxt('new_4971-4976_kinji_2.txt')
-τ_txt = np.loadtxt('4545-5556_0.01step_hapiCalc.txt')
-τ = τ_txt[:, 1] * 7e24
+τ_txt = np.loadtxt('4545-5556_0.01step.txt')
+τ = τ_txt[:, 1]  # * 7e24
 # τ_txt = np.loadtxt('4545-5556_Test.txt')
 # τ  = τ_txt[426:431, 1]
 
 # 光学的厚み
-tau_txt = np.loadtxt('4545-5556_0.01step.txt')
+tau_txt = np.loadtxt('4545-5556_0.001step.txt')
 tau = tau_txt[:, 1]
 
 # 透過率
@@ -67,16 +65,15 @@ y1 = tau
 fig = plt.figure()
 ax = fig.add_subplot(111, title='CO2')
 ax.grid(c='lightgray', zorder=1)
-ax.plot(x2, τ, color='yellow', label="absorption coefficients")
-ax.plot(x1, y1, color='green', label="optical depth")
+ax.plot(x1, y1, color='blue', label="0.001_optical depth")
+ax.plot(x2, τ, color='green', label="0.01_optical depth")
 # ax.plot(x1, tau, color='red', label="Voigt")
-ax.set_xlim(4920, 5030)
-# ax.set_ylim(0, 10000)
+ax.set_xlim(4800, 4900)
+ax.set_ylim(0, 10000)
 # ax.set_yscale('log')
 ax.set_xlabel('Wavenumber [$cm^{-1}$]', fontsize=14)
 # ax.set_ylabel('error (%)', fontsize=14)
-ax.set_ylabel(
-    'comparision of absorption coefficients and Optical Depth', fontsize=8)
+ax.set_ylabel('Optical Depth', fontsize=14)
 # ax.set_ylabel('Transmittance', fontsize=14)
 plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
 

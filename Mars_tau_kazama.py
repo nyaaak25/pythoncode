@@ -16,7 +16,7 @@ ver. 3.0: classを導入
 created on Mon Dec 6 9:42:00 2021
 
 ver. 3.1: 並列化を導入
-created on Tue Dec 21 11:43:00 2021
+created on Fri Jan 14 15:22:00 2022
 """
 
 # インポート
@@ -71,9 +71,9 @@ nd = P / (k * T)
 # 波数幅：計算する波数を決定　変更するパラメータ
 # 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1, 1011000(0.001Step)
 # 最後まで使う
-v = np.zeros(1001000)
-for i in range(1001000):
-    v[i] = 4545.000 + (0.001*i)
+v = np.zeros(2022000)
+for i in range(2022000):
+    v[i] = 4545.000 + (0.0005*i)
     # v[i] = 4545.0000+(1.00*i)
 # print('波数', v)
 
@@ -81,7 +81,6 @@ for i in range(1001000):
 # Voigt functionの計算まで使用
 
 
-@jit
 def Doppler(vijk):
     vD = ((vijk/c)*((2*k*T*Na)/M)**(1/2))  # cm-1
     # print('ドップラー幅', vD)
@@ -92,7 +91,6 @@ def Doppler(vijk):
 # (2)ローレンツ幅νL(p,T)
 
 
-@jit
 def Lorenz(nairk, gammaairk, gammaselfk):
     Pself = mixCO2*P  # 分圧
     vL = (((Tref/T)**nairk)*(gammaairk*(P-Pself) /
@@ -106,7 +104,6 @@ def Lorenz(nairk, gammaairk, gammaselfk):
 # (3)x
 
 
-@jit
 def Voigt_x(vijk, deltaairk, vDk):
     x = np.zeros(((len(T), len(v))))
     vijs = np.zeros((len(T)))
@@ -116,7 +113,7 @@ def Voigt_x(vijk, deltaairk, vDk):
     x = (v_new.T-vijs)/vDk
     x = x.T
 
-    print('x', x)
+    # print('x', x)
     return x
 
 # (4)y
@@ -261,7 +258,7 @@ def Voigt(xk, yk, vDk):
     x_y = np.zeros((len(T), len(v)))
     x_y = -yk + 0.195*np.abs(xk.T) - 0.176
     x_y = x_y.T
-    print(x_y)
+    print('X_y', x_y)
 
     K1 = np.zeros((len(T), len(v)))
     K2 = np.zeros((len(T), len(v)))
@@ -279,19 +276,19 @@ def Voigt(xk, yk, vDk):
 
         xki = xk[:, i]   # 波数方向 i 番目の xk をスライス
 
-        # Region1 　|x|+y >15 の領域
+        # Region1 |x|+y >15 の領域
         K1[:, i] = K1_calc(xki, yk)    # 波数方向のインデックスも渡す(i)
         # print('第一近似', i)
 
-        # Region2 　5.5 < |x|+y < 15の領域
+        # Region2 5.5 < |x|+y < 15の領域
         K2[:, i] = K2_calc(xki, yk)
         # print('第二近似', i)
 
-        # Region3　|x|+y < 5.5 and y > 0.195|x|-0.176
+        # Region3 |x|+y < 5.5 and y > 0.195|x|-0.176
         K3[:, i] = K3_calc(xki, yk)
         # print('第三近似', i)
 
-        # Region4　|x|+y < 5.5 and y < 0.195|x|-0.176
+        # Region4 |x|+y < 5.5 and y < 0.195|x|-0.176
         K4[:, i] = K4_calc(xki, yk)
         # print('第4近似', i)
 
@@ -306,7 +303,6 @@ def Voigt(xk, yk, vDk):
     C3 = np.where((xy < 5.5) & (0 > x_y))
     C4 = np.where((xy < 5.5) & (0 < x_y))
 
-    # %%
     # K1~K4の要素番号にC1のlistを代入
     # 初期化
     KK1 = np.zeros(K1.shape)
@@ -323,8 +319,9 @@ def Voigt(xk, yk, vDk):
     # 多項式近似ができたVoigt functionの式 K
     K = KK1 + KK2 + KK3 + KK4
     print("K", K)
+
     # KK1~KK4,K1~K4を削除
-    del KK1, KK2, KK3, KK4, K1, K2, K3, K4
+    # del KK1, KK2, KK3, KK4, K1, K2, K3, K4
 
     K = (1/vDk)*(K.T)/np.sqrt(np.pi)
 
@@ -332,7 +329,6 @@ def Voigt(xk, yk, vDk):
 
     return K
 
-# %%
 # (6)吸収線強度S(T)
 
 
@@ -340,10 +336,10 @@ def Voigt(xk, yk, vDk):
 def Sintensity(Ek, Sijk, vijk):
     S = (Sijk*(Qref/QT)*((np.exp((-c2*Ek)/T))/(np.exp((-c2*Ek)/Tref))) *
          ((1.0-np.exp((-c2*vijk)/T))/(1.0-np.exp((-c2*vijk)/Tref))))  # cm-1/(molecule-1 cm2)
-    print('S', S)
+    # print('S', S)
 
     return S
-# %%
+
 # (7)吸収係数σ(z, ν)
 
 
@@ -352,12 +348,11 @@ def crosssection(Sk, Kk):
     sigma = np.zeros((len(T), len(v)))
     sigma = Sk * Kk.T  # molecule-1 cm2 Voigt functionを使用して計算
     # sigma = sigma.T
-    print('吸収係数', sigma)
+    # print('吸収係数', sigma)
 
     return sigma.T
 
 
-# %%
 # (8-1)光学的厚みτ(ν)：シングルライン計算
 @jit
 def tau_absorption(sigmak):
@@ -379,7 +374,6 @@ def tau_absorption(sigmak):
     return tau
 
 
-@jit
 @ profile
 def main():
     # (9)各高度の吸収線形
@@ -392,7 +386,6 @@ def main():
 
     # 吸収線の要素番号(k)でループ
     tausum = np.zeros((len(v)))
-    crosssum = np.zeros((len(v)))
 
     for k in range(len(vij)):
         start = time.time()
@@ -444,7 +437,7 @@ def main():
 
     # データセーブ
     tau_v = np.stack([v, tausum], 1)
-    np.savetxt('4545-5556_0.01step.txt', tau_v, fmt='%.10e')
+    np.savetxt('4545-5556_0.001step.txt', tau_v, fmt='%.10e')
 
     # 凡例
     h1, l1 = ax.get_legend_handles_labels()
