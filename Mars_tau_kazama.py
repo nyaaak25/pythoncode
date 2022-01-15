@@ -26,6 +26,7 @@ import pandas as pd
 from memory_profiler import profile
 import time
 from numba import jit
+import multiprocessing
 
 Hitrandata = np.loadtxt('4545-5556_hitrandata.txt')
 vij = Hitrandata[:, 0]
@@ -71,9 +72,9 @@ nd = P / (k * T)
 # 波数幅：計算する波数を決定　変更するパラメータ
 # 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1, 1011000(0.001Step)
 # 最後まで使う
-v = np.zeros(2022000)
-for i in range(2022000):
-    v[i] = 4545.000 + (0.0005*i)
+v = np.zeros(1001000)
+for i in range(1001000):
+    v[i] = 4545.000 + (0.001*i)
     # v[i] = 4545.0000+(1.00*i)
 # print('波数', v)
 
@@ -258,7 +259,7 @@ def Voigt(xk, yk, vDk):
     x_y = np.zeros((len(T), len(v)))
     x_y = -yk + 0.195*np.abs(xk.T) - 0.176
     x_y = x_y.T
-    print('X_y', x_y)
+    # print('X_y', x_y)
 
     K1 = np.zeros((len(T), len(v)))
     K2 = np.zeros((len(T), len(v)))
@@ -269,33 +270,6 @@ def Voigt(xk, yk, vDk):
     K2 = K2_calc(xk, yk)
     K3 = K3_calc(xk, yk)
     K4 = K4_calc(xk, yk)
-
-    """
-    for i in range(len(v)):
-        loopstart = time.time()  # ループ開始時刻
-
-        xki = xk[:, i]   # 波数方向 i 番目の xk をスライス
-
-        # Region1 |x|+y >15 の領域
-        K1[:, i] = K1_calc(xki, yk)    # 波数方向のインデックスも渡す(i)
-        # print('第一近似', i)
-
-        # Region2 5.5 < |x|+y < 15の領域
-        K2[:, i] = K2_calc(xki, yk)
-        # print('第二近似', i)
-
-        # Region3 |x|+y < 5.5 and y > 0.195|x|-0.176
-        K3[:, i] = K3_calc(xki, yk)
-        # print('第三近似', i)
-
-        # Region4 |x|+y < 5.5 and y < 0.195|x|-0.176
-        K4[:, i] = K4_calc(xki, yk)
-        # print('第4近似', i)
-
-        if i % 10000 == 0:  # ループにかかる時間を出力(1万回に1度)
-            print('loop time: ', time.time()-loopstart)
-
-        """
 
     # Region1〜Region4を満たす要素番号場所を検索
     C1 = np.where(xy > 15)
@@ -318,7 +292,7 @@ def Voigt(xk, yk, vDk):
 
     # 多項式近似ができたVoigt functionの式 K
     K = KK1 + KK2 + KK3 + KK4
-    print("K", K)
+    # print("K", K)
 
     # KK1~KK4,K1~K4を削除
     # del KK1, KK2, KK3, KK4, K1, K2, K3, K4
@@ -374,56 +348,47 @@ def tau_absorption(sigmak):
     return tau
 
 
+def for_statememt(k):
+    start = time.time()
+
+    vijk = vij[k]
+    Sijk = Sij[k]
+    gammaselfk = gammaself[k]
+    gammaairk = gammaair[k]
+    Ek = E[k]
+    nairk = nair[k]
+    deltaairk = deltaair[k]
+    vDk = Doppler(vijk)
+    vLk = Lorenz(nairk, gammaairk, gammaselfk)
+    loopstart = time.time()
+    xk = Voigt_x(vijk, deltaairk, vDk)
+    if k % 5000 == 0:  # ループにかかる時間を出力(5000回に1度)
+        print('loop time: ', time.time()-loopstart)
+    yk = Voigt_y(vLk, vDk)
+    Kk = Voigt(xk, yk, vDk)
+    Sk = Sintensity(Ek, Sijk, vijk)
+    sigmak = crosssection(Sk, Kk)
+    tauk = tau_absorption(sigmak)
+
+    print('1ループの所要時間: ', time.time()-start)
+    print('今なんループ？', k)
+
+    return tauk
+
+
 @ profile
 def main():
-    # (9)各高度の吸収線形
-    # A = np.exp(-tau[i])
-    # print(A)
+    with multiprocessing.Pool(processes=4) as pool:
+        # tauk_list = list(pool.map(for_statememt, range(26776)))
+        tauk_list = list(pool.map(for_statememt, range(len(vij))))
+    tauk_list = np.array(tauk_list)
+    print('tauk_list shape: ', tauk_list.shape)
+    tausum = np.sum(tauk_list, axis=0)
 
     # グラフ作成
     # データ読み込み&定義
+
     x1 = v
-
-    # 吸収線の要素番号(k)でループ
-    tausum = np.zeros((len(v)))
-
-    for k in range(len(vij)):
-        start = time.time()
-        vijk = vij[k]
-        Sijk = Sij[k]
-        gammaselfk = gammaself[k]
-        gammaairk = gammaair[k]
-        Ek = E[k]
-        nairk = nair[k]
-        deltaairk = deltaair[k]
-        vDk = Doppler(vijk)
-        vLk = Lorenz(nairk, gammaairk, gammaselfk)
-        loopstart = time.time()
-        xk = Voigt_x(vijk, deltaairk, vDk)
-        if k % 5000 == 0:  # ループにかかる時間を出力(5000回に1度)
-            print('loop time: ', time.time()-loopstart)
-        yk = Voigt_y(vLk, vDk)
-        Kk = Voigt(xk, yk, vDk)
-        Sk = Sintensity(Ek, Sijk, vijk)
-        sigmak = crosssection(Sk, Kk)
-        tauk = tau_absorption(sigmak)
-        print(tauk)
-
-        tausum += tauk
-        print('1ループの所要時間: ', time.time()-start)
-        print('今なんループ？', k)
-
-    # ループなしパターン
-    """
-    vL = Lorenz()
-    vD = Doppler()
-    x = Voigt_x(vD)
-    y = Voigt_y(vL, vD)
-    K = Voigt(x, y, vD)
-    S = Sintensity()
-    sigma = crosssection(S, K)
-    """
-
     y1 = tausum
 
     fig = plt.figure()
@@ -437,7 +402,7 @@ def main():
 
     # データセーブ
     tau_v = np.stack([v, tausum], 1)
-    np.savetxt('4545-5556_0.001step.txt', tau_v, fmt='%.10e')
+    np.savetxt('4545-5556_0.001step_ver3.txt', tau_v, fmt='%.10e')
 
     # 凡例
     h1, l1 = ax.get_legend_handles_labels()
