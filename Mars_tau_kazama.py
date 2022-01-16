@@ -17,6 +17,9 @@ created on Mon Dec 6 9:42:00 2021
 
 ver. 3.1: 並列化を導入
 created on Fri Jan 14 15:22:00 2022
+
+ver. 4.0: cut-offを導入
+created on xxxxxxx
 """
 
 # インポート
@@ -129,7 +132,7 @@ def Voigt_y(vLk, vDk):
 
 
 # Region separate
-@jit
+@jit(nopython=True, fastmath=True)
 def K1_calc(xk, yk):
     # Region1 　|x|+y >15 の領域
     a1 = 0.2820948*yk + 0.5641896*yk**3
@@ -141,7 +144,7 @@ def K1_calc(xk, yk):
     return ((a1 + b1*xk.T**2)/(a2+b2*xk.T**2+xk.T**4)).T
 
 
-@jit
+@jit(nopython=True, fastmath=True)
 def K2_calc(xk, yk):
     a3 = 1.05786*yk + 4.65456*yk**3 + 3.10304*yk**5 + 0.56419*yk**7
     b3 = 2.962*yk + 0.56419*yk**3 + 1.69257*yk**5
@@ -156,7 +159,7 @@ def K2_calc(xk, yk):
     return ((a3 + b3*xk.T**2 + c3*xk.T**4 + d3*xk.T**6) / (a4 + b4*xk.T**2 + c4*xk.T**4 + d4*xk.T**6 + xk.T**8)).T
 
 
-@jit
+@jit(nopython=True, fastmath=True)
 def K3_calc(xk, yk):
     a5 = 272.102 + 973.778*yk + 1629.76*yk**2 + 1678.33*yk**3 + 1174.8*yk**4 + \
         581.746*yk**5 + 204.501*yk**6 + 49.5213*yk**7 + 7.55895*yk**8 + 0.564224*yk**9
@@ -180,7 +183,7 @@ def K3_calc(xk, yk):
     return ((a5 + b5*xk.T**2 + c5*xk.T**4 + d5*xk.T**6 + e5*xk.T**8)/(a6+b6*xk.T**2+c6*xk.T**4 + d6*xk.T**6 + e6*xk.T**8 + xk.T**10)).T
 
 
-@jit
+@jit(nopython=True, fastmath=True)
 def K4_calc(xk, yk):
     a7 = 1.16028e9*yk - 9.86604e8*yk**3 + 4.56662e8*yk**5 - 1.53575e8*yk**7 + 4.08168e7*yk**9 - 9.69463e6*yk**11 + 1.6841e6 * \
         yk**13 - 320772*yk**15 + 40649.2*yk**17 - 5860.68*yk**19 + 571.687 * \
@@ -244,12 +247,12 @@ def K4_calc(xk, yk):
 
     return ((np.exp(yk**2) / np.exp(xk.T**2)) * np.cos(2*xk.T*yk) - ((a7 + b7*xk.T**2 + c7*xk.T**4 + d7*xk.T**6 + e7*xk.T**8 + f7*xk.T**10 + g7*xk.T**12 + h7*xk.T**14 + o7*xk.T**16 + p7*xk.T**18 + q7*xk.T**20 + r7*xk.T**22 + s7*xk.T**24 + t7*xk.T**26)/(a8+b8*xk.T**2+c8*(xk.T)**4 + d8*xk.T**6 + e8*xk.T**8 + f8*xk.T**10 + g8*xk.T**12 + h8*xk.T**14 + o8*xk.T**16 + p8*xk.T**18 + q8*xk.T**20 + r8*xk.T**22 + s8*xk.T**24 + t8*xk.T**26 + xk.T**28))).T
 
-
-# %%
 # (5)Voigt function f(ν,p,T)
 # 近似式導入 [M.Kuntz 1997 etal.]
-@jit
-def Voigt(xk, yk, vDk):
+
+
+@jit(nopython=True, fastmath=True)
+def where_func(xk, yk):
     # |x|+yの計算   # K1, K2, ... の計算部分と同じループに入れる
     xy = np.zeros((len(T), len(v)))
     xy = np.abs(xk.T)+yk
@@ -261,41 +264,36 @@ def Voigt(xk, yk, vDk):
     x_y = x_y.T
     # print('X_y', x_y)
 
-    K1 = np.zeros((len(T), len(v)))
-    K2 = np.zeros((len(T), len(v)))
-    K3 = np.zeros((len(T), len(v)))
-    K4 = np.zeros((len(T), len(v)))
-
-    K1 = K1_calc(xk, yk)
-    K2 = K2_calc(xk, yk)
-    K3 = K3_calc(xk, yk)
-    K4 = K4_calc(xk, yk)
-
-    # Region1〜Region4を満たす要素番号場所を検索
+    # Region1〜Region4を満たさない要素番号場所を検索
     C1 = np.where(xy > 15)
     C2 = np.where((xy < 15) & (xy > 5.5))
     C3 = np.where((xy < 5.5) & (0 > x_y))
     C4 = np.where((xy < 5.5) & (0 < x_y))
 
-    # K1~K4の要素番号にC1のlistを代入
-    # 初期化
-    KK1 = np.zeros(K1.shape)
-    KK2 = np.zeros(K2.shape)
-    KK3 = np.zeros(K3.shape)
-    KK4 = np.zeros(K4.shape)
+    return C1, C2, C3, C4
 
-    # 具体的な値を代入
-    KK1[C1] = K1[C1]
-    KK2[C2] = K2[C2]
-    KK3[C3] = K3[C3]
-    KK4[C4] = K4[C4]
+
+def Voigt(xk, yk, vDk):
+
+    # functionを呼び出して、tupleで拾う
+    C1, C2, C3, C4 = where_func(xk, yk)
+
+    K1 = np.zeros((len(T), len(v)))
+    K2 = np.zeros((len(T), len(v)))
+    K3 = np.zeros((len(T), len(v)))
+    K4 = np.zeros((len(T), len(v)))
+
+    K1[C1] = K1_calc(xk, yk)[C1]
+    K2[C2] = K2_calc(xk, yk)[C2]
+    K3[C3] = K3_calc(xk, yk)[C3]
+    K4[C4] = K4_calc(xk, yk)[C4]
 
     # 多項式近似ができたVoigt functionの式 K
-    K = KK1 + KK2 + KK3 + KK4
+    K = K1 + K2 + K3 + K4
     # print("K", K)
 
     # KK1~KK4,K1~K4を削除
-    # del KK1, KK2, KK3, KK4, K1, K2, K3, K4
+    del K1, K2, K3, K4
 
     K = (1/vDk)*(K.T)/np.sqrt(np.pi)
 
@@ -378,7 +376,7 @@ def for_statememt(k):
 
 @ profile
 def main():
-    with multiprocessing.Pool(processes=4) as pool:
+    with multiprocessing.Pool(processes=1) as pool:
         # tauk_list = list(pool.map(for_statememt, range(26776)))
         tauk_list = list(pool.map(for_statememt, range(len(vij))))
     tauk_list = np.array(tauk_list)
