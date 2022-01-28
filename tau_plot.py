@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # 波数
-ν_txt = np.loadtxt('4545-5556_0.001step_old.txt')
+ν_txt = np.loadtxt('4545-5556_0.0y1step_new.txt')
 ν = ν_txt[:, 0]
 
 # 光学的厚み
@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 # τ  = τ_txt[426:431, 1]
 
 # 光学的厚み
-tau_txt = np.loadtxt('4545-5556_0.001step_old.txt')
+tau_txt = np.loadtxt('4545-5556_0.0y1step_new.txt')
 tau = tau_txt[:, 1]
 
 # 透過率
@@ -65,11 +65,11 @@ y1 = tau
 fig = plt.figure()
 ax = fig.add_subplot(111, title='CO2')
 ax.grid(c='lightgray', zorder=1)
-ax.plot(x1, y1, color='blue', label="0.001_optical depth")
+ax.plot(x1, DDD, color='blue', label="0.001_optical depth")
 # ax.plot(x2, τ, color='green', label="0.01_optical depth")
 # ax.plot(x1, tau, color='red', label="Voigt")
-ax.set_xlim(4800, 4900)
-ax.set_ylim(0, 10000)
+# ax.set_xlim(4800, 4900)
+# ax.set_ylim(0, 10000)
 # ax.set_yscale('log')
 ax.set_xlabel('Wavenumber [$cm^{-1}$]', fontsize=14)
 # ax.set_ylabel('error (%)', fontsize=14)

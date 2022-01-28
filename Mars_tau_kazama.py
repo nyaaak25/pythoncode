@@ -15,11 +15,8 @@ created on Sat Oct 16 21:00:00 2021
 ver. 3.0: classを導入
 created on Mon Dec 6 9:42:00 2021
 
-ver. 3.1: 並列化を導入
+ver. 3.1: 並列化を導入 → canceled
 created on Fri Jan 14 15:22:00 2022
-
-ver. 4.0: cut-offを導入
-created on xxxxxxx
 """
 
 # インポート
@@ -28,8 +25,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from memory_profiler import profile
 import time
-from numba import jit
-import multiprocessing
+from numba import jit, f8
 
 Hitrandata = np.loadtxt('4545-5556_hitrandata.txt')
 vij = Hitrandata[:, 0]
@@ -75,8 +71,8 @@ nd = P / (k * T)
 # 波数幅：計算する波数を決定　変更するパラメータ
 # 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1, 1011000(0.001Step)
 # 最後まで使う
-v = np.zeros(1001000)
-for i in range(1001000):
+v = np.zeros(1011000)
+for i in range(1011000):
     v[i] = 4545.000 + (0.001*i)
     # v[i] = 4545.0000+(1.00*i)
 # print('波数', v)
@@ -105,14 +101,12 @@ def Lorenz(nairk, gammaairk, gammaselfk):
 # nyo=np.stack([νD,νL],1)
 # np.savetxt('doppler_lorentzian.dat',nyo)
 
+
 # (3)x
-
-
 def Voigt_x(vijk, deltaairk, vDk):
     x = np.zeros(((len(T), len(v))))
     vijs = np.zeros((len(T)))
     vijs = vijk + ((deltaairk*P/Pref))
-
     v_new = np.repeat(v[None, :], 31, axis=0)
     x = (v_new.T-vijs)/vDk
     x = x.T
@@ -120,10 +114,9 @@ def Voigt_x(vijk, deltaairk, vDk):
     # print('x', x)
     return x
 
+
 # (4)y
-
-
-@jit
+@jit(nopython=True, fastmath=True)
 def Voigt_y(vLk, vDk):
     y = vLk/vDk
 
@@ -247,10 +240,10 @@ def K4_calc(xk, yk):
 
     return ((np.exp(yk**2) / np.exp(xk.T**2)) * np.cos(2*xk.T*yk) - ((a7 + b7*xk.T**2 + c7*xk.T**4 + d7*xk.T**6 + e7*xk.T**8 + f7*xk.T**10 + g7*xk.T**12 + h7*xk.T**14 + o7*xk.T**16 + p7*xk.T**18 + q7*xk.T**20 + r7*xk.T**22 + s7*xk.T**24 + t7*xk.T**26)/(a8+b8*xk.T**2+c8*(xk.T)**4 + d8*xk.T**6 + e8*xk.T**8 + f8*xk.T**10 + g8*xk.T**12 + h8*xk.T**14 + o8*xk.T**16 + p8*xk.T**18 + q8*xk.T**20 + r8*xk.T**22 + s8*xk.T**24 + t8*xk.T**26 + xk.T**28))).T
 
+
+# %%
 # (5)Voigt function f(ν,p,T)
 # 近似式導入 [M.Kuntz 1997 etal.]
-
-
 @jit(nopython=True, fastmath=True)
 def where_func(xk, yk):
     # |x|+yの計算   # K1, K2, ... の計算部分と同じループに入れる
@@ -274,7 +267,6 @@ def where_func(xk, yk):
 
 
 def Voigt(xk, yk, vDk):
-
     # functionを呼び出して、tupleで拾う
     C1, C2, C3, C4 = where_func(xk, yk)
 
@@ -283,10 +275,11 @@ def Voigt(xk, yk, vDk):
     K3 = np.zeros((len(T), len(v)))
     K4 = np.zeros((len(T), len(v)))
 
+    # ここがネック[edited by shin]
     K1[C1] = K1_calc(xk, yk)[C1]
     K2[C2] = K2_calc(xk, yk)[C2]
     K3[C3] = K3_calc(xk, yk)[C3]
-    K4[C4] = K4_calc(xk, yk)[C4]
+    K4[C4] = K4_calc(xk, yk)[C4]    # ここがネック[edited by shin]
 
     # 多項式近似ができたVoigt functionの式 K
     K = K1 + K2 + K3 + K4
@@ -301,9 +294,8 @@ def Voigt(xk, yk, vDk):
 
     return K
 
+
 # (6)吸収線強度S(T)
-
-
 @jit
 def Sintensity(Ek, Sijk, vijk):
     S = (Sijk*(Qref/QT)*((np.exp((-c2*Ek)/T))/(np.exp((-c2*Ek)/Tref))) *
@@ -312,9 +304,8 @@ def Sintensity(Ek, Sijk, vijk):
 
     return S
 
+
 # (7)吸収係数σ(z, ν)
-
-
 @jit
 def crosssection(Sk, Kk):
     sigma = np.zeros((len(T), len(v)))
@@ -341,47 +332,41 @@ def tau_absorption(sigmak):
 # 光学的厚みの足し合わせは、台形近似をして積分を行っている
 # (8-2)：マルチライン増やす(ラインバイライン計算)
     # sumtau = np.sum(tau, axis=0)
-    print('光学的厚み', tau)
+    # print('光学的厚み', tau)
 
     return tau
 
 
-def for_statememt(k):
-    start = time.time()
-
-    vijk = vij[k]
-    Sijk = Sij[k]
-    gammaselfk = gammaself[k]
-    gammaairk = gammaair[k]
-    Ek = E[k]
-    nairk = nair[k]
-    deltaairk = deltaair[k]
-    vDk = Doppler(vijk)
-    vLk = Lorenz(nairk, gammaairk, gammaselfk)
-    loopstart = time.time()
-    xk = Voigt_x(vijk, deltaairk, vDk)
-    if k % 5000 == 0:  # ループにかかる時間を出力(5000回に1度)
-        print('loop time: ', time.time()-loopstart)
-    yk = Voigt_y(vLk, vDk)
-    Kk = Voigt(xk, yk, vDk)
-    Sk = Sintensity(Ek, Sijk, vijk)
-    sigmak = crosssection(Sk, Kk)
-    tauk = tau_absorption(sigmak)
-
-    print('1ループの所要時間: ', time.time()-start)
-    print('今なんループ？', k)
-
-    return tauk
-
-
 @ profile
 def main():
-    with multiprocessing.Pool(processes=1) as pool:
-        # tauk_list = list(pool.map(for_statememt, range(26776)))
-        tauk_list = list(pool.map(for_statememt, range(len(vij))))
-    tauk_list = np.array(tauk_list)
-    print('tauk_list shape: ', tauk_list.shape)
-    tausum = np.sum(tauk_list, axis=0)
+    # 吸収線の要素番号(k)でループ
+    tausum = np.zeros((len(v)))
+
+    for k in range(len(vij)):
+        start = time.time()
+        vijk = vij[k]
+        Sijk = Sij[k]
+        gammaselfk = gammaself[k]
+        gammaairk = gammaair[k]
+        Ek = E[k]
+        nairk = nair[k]
+        deltaairk = deltaair[k]
+        vDk = Doppler(vijk)
+        vLk = Lorenz(nairk, gammaairk, gammaselfk)
+        # loopstart = time.time()
+        xk = Voigt_x(vijk, deltaairk, vDk)
+        # if k % 5000 == 0:  # ループにかかる時間を出力(5000回に1度)
+        #     print('loop time: ', time.time()-loopstart)
+        yk = Voigt_y(vLk, vDk)
+        Kk = Voigt(xk, yk, vDk)  # ここがネック[edited by shin]
+        Sk = Sintensity(Ek, Sijk, vijk)
+        sigmak = crosssection(Sk, Kk)
+        tauk = tau_absorption(sigmak)
+        print(tauk)
+
+        tausum += tauk
+        print('1ループの所要時間: ', time.time()-start)
+        print('今なんループ？', k)
 
     # グラフ作成
     # データ読み込み&定義
@@ -400,7 +385,7 @@ def main():
 
     # データセーブ
     tau_v = np.stack([v, tausum], 1)
-    np.savetxt('4545-5556_0.001step_ver3.txt', tau_v, fmt='%.10e')
+    np.savetxt('4545-5556_0.001step_WS.txt', tau_v, fmt='%.10e')
 
     # 凡例
     h1, l1 = ax.get_legend_handles_labels()

@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-Tau_txt = np.loadtxt('4545-5556_0.001step.txt')
+Tau_txt = np.loadtxt('4545-5556_0.001step_old.txt')
 Tau = Tau_txt[:, 1]
 v = Tau_txt[:, 0]
 sza_theta = 18.986036
@@ -16,10 +16,11 @@ y1 = Iobs
 fig = plt.figure()
 ax = fig.add_subplot(111, title='CO2')
 ax.grid(c='lightgray', zorder=1)
-ax.plot(x1, y1, color='b')
+ax.plot(x1, y1, color='b',linewidth=0.1)
 # ax.set_xlim(4973, 4975)
 # ax.set_yscale('log')
 ax.set_xlabel('Wavenumber [$cm^{-1}$]', fontsize=14)
+ax.set_ylabel('Intensity', fontsize=14)
 plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
 
 # 凡例
