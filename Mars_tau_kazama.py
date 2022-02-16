@@ -17,6 +17,9 @@ created on Mon Dec 6 9:42:00 2021
 
 ver. 3.1: 並列化を導入 → canceled
 created on Fri Jan 14 15:22:00 2022
+
+ver. 4.0 cut-off導入
+created on Wed Feb 16 19:12:00 2022
 """
 
 # インポート
@@ -68,18 +71,42 @@ Pself = mixCO2*P
 # nd=((Pself*Na)/(R*T))
 nd = P / (k * T)
 
-# 波数幅：計算する波数を決定　変更するパラメータ
-# 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1, 1011000(0.001Step)
-# 最後まで使う
-v = np.zeros(1011000)
+
+# 波数幅:計算する波数を決定 変更するパラメータ
+# 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1
+
+# plotする範囲の波数
+dv = 0.001
+v_all = np.arange(4545, 5556, dv)
+
+# 計算軸の波数。中にはv_allが含まれている
+addv_m = np.arange(v_all[0]-100, v_all[0], dv)
+addv_p = np.arange(v_all[-1]+dv, v_all[-1]+100, dv)
+
+# 計算軸を足し合わせ。addv_m + v_all + addv_p
+vk_all = np.hstack((addv_m, v_all, addv_p))
+
+
+"""
+#旧波数, 1011000(0.001Step)
+v_all = np.zeros(1011000)
 for i in range(1011000):
-    v[i] = 4545.000 + (0.001*i)
+    v_all[i] = 4545.000 + (0.001*i)
     # v[i] = 4545.0000+(1.00*i)
 # print('波数', v)
+"""
+
+# 波数幅を決定
+
+
+def vector(vijk):
+    mini_range = np.where((vk_all >= vijk - 100) & (vk_all <= vijk + 100))
+    vmini = vk_all[mini_range]
+    return vmini
+
 
 # (1)ドップラー幅νD(T)
 # Voigt functionの計算まで使用
-
 
 def Doppler(vijk):
     vD = ((vijk/c)*((2*k*T*Na)/M)**(1/2))  # cm-1
@@ -103,11 +130,11 @@ def Lorenz(nairk, gammaairk, gammaselfk):
 
 
 # (3)x
-def Voigt_x(vijk, deltaairk, vDk):
-    x = np.zeros(((len(T), len(v))))
+def Voigt_x(vijk, deltaairk, vk, vDk, v_len):
+    x = np.zeros(((len(T), v_len)))
     vijs = np.zeros((len(T)))
     vijs = vijk + ((deltaairk*P/Pref))
-    v_new = np.repeat(v[None, :], 31, axis=0)
+    v_new = np.repeat(vk[None, :], 31, axis=0)
     x = (v_new.T-vijs)/vDk
     x = x.T
 
@@ -245,14 +272,14 @@ def K4_calc(xk, yk):
 # (5)Voigt function f(ν,p,T)
 # 近似式導入 [M.Kuntz 1997 etal.]
 @jit(nopython=True, fastmath=True)
-def where_func(xk, yk):
+def where_func(xk, yk, v_len):
     # |x|+yの計算   # K1, K2, ... の計算部分と同じループに入れる
-    xy = np.zeros((len(T), len(v)))
+    xy = np.zeros((len(T), v_len))
     xy = np.abs(xk.T)+yk
     xy = xy.T
 
     # -y + 0.195|x|-0.176の計算 # K1, K2, ... の計算部分と同じループに入れる
-    x_y = np.zeros((len(T), len(v)))
+    x_y = np.zeros((len(T), v_len))
     x_y = -yk + 0.195*np.abs(xk.T) - 0.176
     x_y = x_y.T
     # print('X_y', x_y)
@@ -266,14 +293,14 @@ def where_func(xk, yk):
     return C1, C2, C3, C4
 
 
-def Voigt(xk, yk, vDk):
+def Voigt(xk, yk, vDk, v_len):
     # functionを呼び出して、tupleで拾う
     C1, C2, C3, C4 = where_func(xk, yk)
 
-    K1 = np.zeros((len(T), len(v)))
-    K2 = np.zeros((len(T), len(v)))
-    K3 = np.zeros((len(T), len(v)))
-    K4 = np.zeros((len(T), len(v)))
+    K1 = np.zeros((len(T), v_len))
+    K2 = np.zeros((len(T), v_len))
+    K3 = np.zeros((len(T), v_len))
+    K4 = np.zeros((len(T), v_len))
 
     # ここがネック[edited by shin]
     K1[C1] = K1_calc(xk, yk)[C1]
@@ -307,8 +334,8 @@ def Sintensity(Ek, Sijk, vijk):
 
 # (7)吸収係数σ(z, ν)
 @jit
-def crosssection(Sk, Kk):
-    sigma = np.zeros((len(T), len(v)))
+def crosssection(Sk, Kk, v_len):
+    sigma = np.zeros((len(T), v_len))
     sigma = Sk * Kk.T  # molecule-1 cm2 Voigt functionを使用して計算
     # sigma = sigma.T
     # print('吸収係数', sigma)
@@ -318,8 +345,8 @@ def crosssection(Sk, Kk):
 
 # (8-1)光学的厚みτ(ν)：シングルライン計算
 @jit
-def tau_absorption(sigmak):
-    tau = np.zeros((len(v)))
+def tau_absorption(sigmak, v_len):
+    tau = np.zeros((v_len))
     for j in range(len(T)):
         if j == 0:
             tau = 0.5 * sigmak[j, :]*nd[j]*mixCO2*(2e5)
@@ -351,17 +378,20 @@ def main():
         Ek = E[k]
         nairk = nair[k]
         deltaairk = deltaair[k]
+        vk = vector(vijk)
+        # vkにはvmini自体が入っている
+        v_len = len(vk)
         vDk = Doppler(vijk)
         vLk = Lorenz(nairk, gammaairk, gammaselfk)
         # loopstart = time.time()
-        xk = Voigt_x(vijk, deltaairk, vDk)
+        xk = Voigt_x(vijk, deltaairk, vk, vDk, v_len)
         # if k % 5000 == 0:  # ループにかかる時間を出力(5000回に1度)
         #     print('loop time: ', time.time()-loopstart)
         yk = Voigt_y(vLk, vDk)
-        Kk = Voigt(xk, yk, vDk)  # ここがネック[edited by shin]
+        Kk = Voigt(xk, yk, vDk, v_len)  # ここがネック[edited by shin]
         Sk = Sintensity(Ek, Sijk, vijk)
-        sigmak = crosssection(Sk, Kk)
-        tauk = tau_absorption(sigmak)
+        sigmak = crosssection(Sk, Kk, v_len)
+        tauk = tau_absorption(sigmak, v_len)
         print(tauk)
 
         tausum += tauk
@@ -371,7 +401,7 @@ def main():
     # グラフ作成
     # データ読み込み&定義
 
-    x1 = v
+    x1 = v_all
     y1 = tausum
 
     fig = plt.figure()
@@ -384,7 +414,7 @@ def main():
     plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
 
     # データセーブ
-    tau_v = np.stack([v, tausum], 1)
+    tau_v = np.stack([v_all, tausum], 1)
     np.savetxt('4545-5556_0.001step_WS.txt', tau_v, fmt='%.10e')
 
     # 凡例
