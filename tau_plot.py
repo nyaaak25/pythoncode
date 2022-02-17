@@ -9,18 +9,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # 波数
-ν_txt = np.loadtxt('4545-5556_0.0y1step_new.txt')
+ν_txt = np.loadtxt('4545-5556_0.01step_new.txt')
 ν = ν_txt[:, 0]
 
 # 光学的厚み
 # τ_txt = np.loadtxt('new_4971-4976_kinji_2.txt')
-τ_txt = np.loadtxt('4545-5556_0.01step.txt')
+τ_txt = np.loadtxt('4545-5556_0.01step_cutoff.txt')
 τ = τ_txt[:, 1]  # * 7e24
 # τ_txt = np.loadtxt('4545-5556_Test.txt')
 # τ  = τ_txt[426:431, 1]
 
 # 光学的厚み
-tau_txt = np.loadtxt('4545-5556_0.0y1step_new.txt')
+tau_txt = np.loadtxt('4545-5556_0.01step_new.txt')
 tau = tau_txt[:, 1]
 
 # 透過率
@@ -54,7 +54,7 @@ A = np.exp(-tau)
 # ---------------グラフ作成----------------------------------------------
 # データ読み込み&定義
 # DDD=((τ-Satoτ_for[0:2001])/Satoτ_for[0:2001])*100  #(風間ー佐藤さん)*100/佐藤さん
-# DDD = (τ-tau)*100/tau
+DDD = (τ-tau)*100/tau
 # AAA = ((A-Sato21AA)/Sato21AA)*100 #(風間ー佐藤さん)*100/佐藤さん
 # AAA = A-Sato21AA
 
@@ -62,14 +62,14 @@ x1 = ν
 x2 = τ_txt[:, 0]
 y1 = tau
 
-fig = plt.figure()
+fig = plt.figure(dpi=200)
 ax = fig.add_subplot(111, title='CO2')
 ax.grid(c='lightgray', zorder=1)
-ax.plot(x1, DDD, color='blue', label="0.001_optical depth")
-# ax.plot(x2, τ, color='green', label="0.01_optical depth")
+ax.plot(x1, τ, color='blue', label="Cut-off")
+ax.plot(x2, y1, color='green', label="No cut-off")
 # ax.plot(x1, tau, color='red', label="Voigt")
-# ax.set_xlim(4800, 4900)
-# ax.set_ylim(0, 10000)
+ax.set_xlim(4601, 4601.1)
+ax.set_ylim(4e-5, 1.8e-4)
 # ax.set_yscale('log')
 ax.set_xlabel('Wavenumber [$cm^{-1}$]', fontsize=14)
 # ax.set_ylabel('error (%)', fontsize=14)

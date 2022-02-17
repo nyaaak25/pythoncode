@@ -6,20 +6,22 @@ Created on Sun Apr 20 15:32:00 2021
 @author: Suzuki
 
 @author: A.Kazama kazama@pparc.gp.tohoku.ac.jp
-ver.2 マルチスペクトルをVoigt functionをベタに計算させて導出プログラムを作成
+
+ver. 2.0: マルチスペクトルを導入 ## Voigt functionをベタに計算
 Created on Wed Sep 1 11:21:00 2021
 
-ver.2.1: Voigt functonに多項式近似を導入
+ver. 2.1: Voigt functonに多項式近似を導入
 created on Sat Oct 16 21:00:00 2021
 
 ver. 3.0: classを導入
 created on Mon Dec 6 9:42:00 2021
 
-ver. 3.1: 並列化を導入 → canceled
+ver. 3.1: 並列化を導入 → canceled ## phobosだとメモリ量食っても大丈夫？
 created on Fri Jan 14 15:22:00 2022
 
-ver. 4.0 cut-off導入
+ver. 4.0: cut-off導入
 created on Wed Feb 16 19:12:00 2022
+
 """
 # %%
 # インポート
@@ -30,6 +32,7 @@ from memory_profiler import profile
 import time
 from numba import jit, f8
 
+# HITRAN dataを読み込み
 Hitrandata = np.loadtxt('4545-5556_hitrandata.txt')
 vij = Hitrandata[:, 0]
 Sij = Hitrandata[:, 1]
@@ -72,30 +75,18 @@ Pself = mixCO2*P
 nd = P / (k * T)
 
 
-# 波数幅:計算する波数を決定 変更するパラメータ
-# 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1
-
+# 波数幅: 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1
 # plotする範囲の波数
 dv = 0.01
 cut = 100
 v_all = np.arange(4545, 5556, dv)
 
-# 計算軸の波数。中にはv_allが含まれている
+# 計算軸の波数前後を生成。中にはv_allが含まれている
 addv_m = np.arange(v_all[0]-cut, v_all[0], dv)
 addv_p = np.arange(v_all[-1]+dv, v_all[-1]+cut, dv)
 
 # 計算軸を足し合わせ。addv_m + v_all + addv_p
 vk_all = np.hstack((addv_m, v_all, addv_p))
-
-
-"""
-#旧波数, 1011000(0.001Step)
-v_all = np.zeros(1011000)
-for i in range(1011000):
-    v_all[i] = 4545.000 + (0.001*i)
-    # v[i] = 4545.0000+(1.00*i)
-# print('波数', v)
-"""
 
 # (1)ドップラー幅νD(T)
 # Voigt functionの計算まで使用
@@ -107,7 +98,6 @@ def Doppler(vijk):
 
     return vD
 
-# %%
 # (2)ローレンツ幅νL(p,T)
 
 
