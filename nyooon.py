@@ -51,22 +51,12 @@ nd = P / (k * T)
 # 波数幅：計算する波数を決定　変更するパラメータ
 # 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1, 1011000(0.001Step)
 # 最後まで使う
-v = np.zeros(1011000)
-for i in range(1011000):
-    v[i] = 4545.000 + (0.001*i)
-    # v[i] = 4545.0000+(1.00*i)
-# print('波数', v)
+
+dv = 0.01
+v = np.arange(4445, 5656, dv)
 
 # (1)ドップラー幅νD(T)
 # Voigt functionの計算まで使用
-
-
-def vector(vijk):
-    v = np.zeros(200000)
-    for i in range(200000):
-        v[i] = int(vijk-100) + (0.001*i)
-
-    return v
 
 
 def Doppler(vijk):
@@ -372,7 +362,7 @@ def main():
 
     # データセーブ
     tau_v = np.stack([v, tausum], 1)
-    np.savetxt('4545-5556_0.001step_WS.txt', tau_v, fmt='%.10e')
+    np.savetxt('4445-5656_0.01step.txt', tau_v, fmt='%.10e')
 
     # 凡例
     h1, l1 = ax.get_legend_handles_labels()

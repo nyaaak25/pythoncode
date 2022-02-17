@@ -1,4 +1,4 @@
-
+# %%
 """
 -*- coding: utf-8 -*-
 光学的厚みを計算させるプログラム
@@ -21,7 +21,7 @@ created on Fri Jan 14 15:22:00 2022
 ver. 4.0 cut-off導入
 created on Wed Feb 16 19:12:00 2022
 """
-
+# %%
 # インポート
 import numpy as np
 import matplotlib.pyplot as plt
@@ -76,12 +76,13 @@ nd = P / (k * T)
 # 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1
 
 # plotする範囲の波数
-dv = 0.001
+dv = 0.01
+cut = 100
 v_all = np.arange(4545, 5556, dv)
 
 # 計算軸の波数。中にはv_allが含まれている
-addv_m = np.arange(v_all[0]-100, v_all[0], dv)
-addv_p = np.arange(v_all[-1]+dv, v_all[-1]+100, dv)
+addv_m = np.arange(v_all[0]-cut, v_all[0], dv)
+addv_p = np.arange(v_all[-1]+dv, v_all[-1]+cut, dv)
 
 # 計算軸を足し合わせ。addv_m + v_all + addv_p
 vk_all = np.hstack((addv_m, v_all, addv_p))
@@ -96,17 +97,9 @@ for i in range(1011000):
 # print('波数', v)
 """
 
-# 波数幅を決定
-
-
-def vector(vijk):
-    mini_range = np.where((vk_all >= vijk - 100) & (vk_all <= vijk + 100))
-    vmini = vk_all[mini_range]
-    return vmini
-
-
 # (1)ドップラー幅νD(T)
 # Voigt functionの計算まで使用
+
 
 def Doppler(vijk):
     vD = ((vijk/c)*((2*k*T*Na)/M)**(1/2))  # cm-1
@@ -295,7 +288,7 @@ def where_func(xk, yk, v_len):
 
 def Voigt(xk, yk, vDk, v_len):
     # functionを呼び出して、tupleで拾う
-    C1, C2, C3, C4 = where_func(xk, yk)
+    C1, C2, C3, C4 = where_func(xk, yk, v_len)
 
     K1 = np.zeros((len(T), v_len))
     K2 = np.zeros((len(T), v_len))
@@ -367,7 +360,8 @@ def tau_absorption(sigmak, v_len):
 @ profile
 def main():
     # 吸収線の要素番号(k)でループ
-    tausum = np.zeros((len(v)))
+    # tausumは計算軸の長さ。(cut-off分が込み)
+    tausum = np.zeros((len(vk_all)))
 
     for k in range(len(vij)):
         start = time.time()
@@ -378,8 +372,9 @@ def main():
         Ek = E[k]
         nairk = nair[k]
         deltaairk = deltaair[k]
-        vk = vector(vijk)
-        # vkにはvmini自体が入っている
+        # 波数幅を決定。vkにはvmini自体が入っている。
+        mini_range = np.where((vk_all >= vijk - cut) & (vk_all <= vijk + cut))
+        vk = vk_all[mini_range]
         v_len = len(vk)
         vDk = Doppler(vijk)
         vLk = Lorenz(nairk, gammaairk, gammaselfk)
@@ -394,7 +389,14 @@ def main():
         tauk = tau_absorption(sigmak, v_len)
         print(tauk)
 
-        tausum += tauk
+        mini_range_inti = mini_range[0][0]  # mini rangeの開始位置 (on 計算軸)
+        mini_range_end = mini_range_inti + \
+            mini_range[0].size  # mini rangeのサイズ (on 計算軸)
+
+        tausum[mini_range_inti:mini_range_end] += tauk
+
+        # 計算軸からもとの波数軸に戻す。(cut-off分を切り落とす)
+        tausum0 = tausum[addv_m.size:tausum.size-addv_p.size]
         print('1ループの所要時間: ', time.time()-start)
         print('今なんループ？', k)
 
@@ -402,7 +404,7 @@ def main():
     # データ読み込み&定義
 
     x1 = v_all
-    y1 = tausum
+    y1 = tausum0
 
     fig = plt.figure()
     ax = fig.add_subplot(111, title='CO2')
@@ -414,8 +416,8 @@ def main():
     plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
 
     # データセーブ
-    tau_v = np.stack([v_all, tausum], 1)
-    np.savetxt('4545-5556_0.001step_WS.txt', tau_v, fmt='%.10e')
+    tau_v = np.stack([v_all, tausum0], 1)
+    np.savetxt('4545-5556_0.01step_cutoff.txt', tau_v, fmt='%.10e')
 
     # 凡例
     h1, l1 = ax.get_legend_handles_labels()
