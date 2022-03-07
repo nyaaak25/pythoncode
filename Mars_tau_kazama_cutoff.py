@@ -77,8 +77,8 @@ nd = P / (k * T)
 
 # 波数幅: 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1
 # plotする範囲の波数
-dv = 0.01
-cut = 100
+dv = 0.0001
+cut = 120
 v_all = np.arange(4545, 5556, dv)
 
 # 計算軸の波数前後を生成。中にはv_allが含まれている
@@ -377,7 +377,7 @@ def main():
         Sk = Sintensity(Ek, Sijk, vijk)
         sigmak = crosssection(Sk, Kk, v_len)
         tauk = tau_absorption(sigmak, v_len)
-        print(tauk)
+        # print(tauk)
 
         mini_range_inti = mini_range[0][0]  # mini rangeの開始位置 (on 計算軸)
         mini_range_end = mini_range_inti + \
@@ -387,8 +387,9 @@ def main():
 
         # 計算軸からもとの波数軸に戻す。(cut-off分を切り落とす)
         tausum0 = tausum[addv_m.size:tausum.size-addv_p.size]
-        print('1ループの所要時間: ', time.time()-start)
-        print('今なんループ？', k)
+        if k % 100 == 0:  # ループにかかる時間を出力(5000回に1度)
+            print('1ループの所要時間: ', time.time()-start)
+            print('今なんループ？', k)
 
     # グラフ作成
     # データ読み込み&定義
@@ -407,9 +408,9 @@ def main():
 
     # データセーブ
     tau_v = np.stack([v_all, tausum0], 1)
-    np.savetxt('4545-5556_0.01step_cutoff.txt', tau_v, fmt='%.10e')
+    np.savetxt('4545-5556_0.0001step_cutoff_120.txt', tau_v, fmt='%.10e')
 
-    # 凡例
+    # 凡例あ
     h1, l1 = ax.get_legend_handles_labels()
     ax.legend(h1, l1, loc='lower right', fontsize=14)
     plt.show()
@@ -417,4 +418,6 @@ def main():
 
 # %%
 if __name__ == '__main__':
+    start = time.time()
     main()
+    print('総計算時間: ', time.time()-start)

@@ -55,6 +55,17 @@ nd = P / (k * T)
 dv = 0.01
 v = np.arange(4445, 5656, dv)
 
+
+"""
+#旧波数, 1011000(0.001Step)
+v_all = np.zeros(1011000)
+for i in range(1011000):
+    v_all[i] = 4545.000 + (0.001*i)
+    # v[i] = 4545.0000+(1.00*i)
+# print('波数', v)
+"""
+
+
 # (1)ドップラー幅νD(T)
 # Voigt functionの計算まで使用
 
