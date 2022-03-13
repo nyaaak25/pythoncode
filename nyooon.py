@@ -7,6 +7,73 @@ from memory_profiler import profile
 import time
 from numba import jit, f8
 
+# %%
+import numpy as np
+import matplotlib.pylab as plt
+
+import scipy.signal as signal
+import scipy.stats as stats
+
+# Create the initial function. I model a spike
+# as an arbitrarily narrow Gaussian
+mu = 1.0  # Centroid
+sig = 0.001  # Width
+original_pdf = stats.norm(mu, sig)
+
+x = np.linspace(0.0, 2.0, 1000)
+y = original_pdf.pdf(x)
+plt.plot(x, y, label='original')
+
+
+# Create the ``smearing" function to convolve with the
+# original function.
+# I use a Gaussian, centered at 0.0 (no bias) and
+# width of 0.5
+mu_conv = 0.0  # Centroid
+sigma_conv = 0.5  # Width
+convolving_term = stats.norm(mu_conv, sigma_conv)
+
+xconv = np.linspace(-5, 5, 1000)
+yconv = convolving_term.pdf(xconv)
+
+convolved_pdf = signal.convolve(y/y.sum(), yconv, mode='same')
+
+plt.plot(x, convolved_pdf, label='convolved')
+plt.ylim(0, 1.2*max(convolved_pdf))
+plt.legend()
+plt.show()
+
+# %%
+# 装置関数を実装
+
+# randomなデータを用意
+
+
+def f(x):
+    if np.absolute(x) > 0.5:
+        y = 0
+    else:
+        y = 1
+    return y
+
+
+X = np.linspace(-2.0, 2.0, num=100)
+
+F = [(f(x) for x in X)]
+
+G = [f(x) for x in X]
+
+C = np.convolve(F, G)
+
+# plt.plot(X,F)
+plt.plot(C)
+
+plt.title("How to perform a 1D convolution in python ?")
+plt.show()
+
+# %%
+
+"""
 Hitrandata = np.loadtxt('4545-5556_hitrandata.txt')
 vij = Hitrandata[:, 0]
 Sij = Hitrandata[:, 1]
@@ -57,6 +124,7 @@ v = np.arange(4445, 5656, dv)
 
 
 """
+"""
 #旧波数, 1011000(0.001Step)
 v_all = np.zeros(1011000)
 for i in range(1011000):
@@ -65,7 +133,7 @@ for i in range(1011000):
 # print('波数', v)
 """
 
-
+"""
 # (1)ドップラー幅νD(T)
 # Voigt functionの計算まで使用
 
@@ -384,3 +452,5 @@ def main():
 # %%
 if __name__ == '__main__':
     main()
+
+"""
