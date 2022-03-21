@@ -410,7 +410,7 @@ def main():
     tau_v = np.stack([v_all, tausum0], 1)
     np.savetxt('4545-5556_0.0001step_cutoff_120.txt', tau_v, fmt='%.10e')
 
-    # 凡例あ
+    # 凡例
     h1, l1 = ax.get_legend_handles_labels()
     ax.legend(h1, l1, loc='lower right', fontsize=14)
     plt.show()

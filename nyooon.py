@@ -1,5 +1,8 @@
 # %%
 # インポート
+from scipy.io import readsav
+import scipy.io as sio
+from os.path import dirname, join as pjoin
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -20,9 +23,17 @@ mu = 1.0  # Centroid
 sig = 0.001  # Width
 original_pdf = stats.norm(mu, sig)
 
-x = np.linspace(0.0, 2.0, 1000)
-y = original_pdf.pdf(x)
-plt.plot(x, y, label='original')
+# 波数
+v_txt = np.loadtxt('4545-5556_0.01step_cutoff_120.txt')
+v = v_txt[:, 0]
+
+# 光学的厚み
+tau_txt = np.loadtxt('4545-5556_0.01step_cutoff_120.txt')
+cut120 = tau_txt[:, 1]
+
+# x = np.linspace(0.0, 2.0, 1000)
+# y = original_pdf.pdf(x)
+# plt.plot(v, cut120, label='original')
 
 
 # Create the ``smearing" function to convolve with the
@@ -33,19 +44,18 @@ mu_conv = 0.0  # Centroid
 sigma_conv = 0.5  # Width
 convolving_term = stats.norm(mu_conv, sigma_conv)
 
-xconv = np.linspace(-5, 5, 1000)
+xconv = np.linspace(-20, 20, 4000)
 yconv = convolving_term.pdf(xconv)
 
-convolved_pdf = signal.convolve(y/y.sum(), yconv, mode='same')
+convolved_pdf = signal.convolve(cut120, yconv, mode='same')/sum(cut120)
 
-plt.plot(x, convolved_pdf, label='convolved')
-plt.ylim(0, 1.2*max(convolved_pdf))
+plt.plot(v, convolved_pdf, label='convolved')
+# plt.ylim(0, 1.2*max(convolved_pdf))
 plt.legend()
 plt.show()
 
 # %%
 # 装置関数を実装
-
 # randomなデータを用意
 
 
@@ -59,7 +69,7 @@ def f(x):
 
 X = np.linspace(-2.0, 2.0, num=100)
 
-F = [(f(x) for x in X)]
+F = [f(x) for x in X]
 
 G = [f(x) for x in X]
 
@@ -68,11 +78,21 @@ C = np.convolve(F, G)
 # plt.plot(X,F)
 plt.plot(C)
 
-plt.title("How to perform a 1D convolution in python ?")
+plt.title("1D convolution")
 plt.show()
 
 # %%
+# sav file openプログラム
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname = 'ORB0006_1.sav'
+sav_data = readsav(sav_fname)
+print(sav_data.keys())
+wvl = sav_data['wvl']
 
+CO2 = np.where((wvl > 1.8) & (wvl < 2.2))
+print(CO2)
+
+# %%
 """
 Hitrandata = np.loadtxt('4545-5556_hitrandata.txt')
 vij = Hitrandata[:, 0]
