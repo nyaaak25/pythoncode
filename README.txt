@@ -9,7 +9,7 @@ contact: kazama@pparc.gp.tohoku.ac.jp
 これは導出された光学的厚みからOMEGAの波長分解能にまで落とすまでを行うプログラムになる予定。
 現在(2022/02/17)は、装置関数を掛け合わされる前の放射強度導出段階である。
 
-・　tau_plot.py
+・　tau_plot_new.py
 これは色々なplotをするファイル。絵がかける。
 
 ・　Hitrandata.py
