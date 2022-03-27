@@ -16,13 +16,13 @@ import numpy as np
 import matplotlib.pylab as plt
 
 # 波数
-v_txt = np.loadtxt('4545-5556_0.001step_cutoff_120.txt')
+v_txt = np.loadtxt('4545-5556_0.0001step_cutoff_120.txt')
 v1 = v_txt[:, 0]  # cm-1
 cm_v = (1/v1)*10000
 wav = cm_v[::-1]  # um
 
 # 光学的厚み→放射強度
-tau_txt = np.loadtxt('4545-5556_0.001step_cutoff_120.txt')
+tau_txt = np.loadtxt('4545-5556_0.0001step_cutoff_120.txt')
 tau = tau_txt[:, 1]
 sza_theta = 18.986036
 
@@ -47,7 +47,7 @@ for k in range(len(OMEGAcenter_list)):
     sig = 6.5e-3
 
     # wav 1 ~ wav n までのガウシアンの値を求める
-    C1 = np.where((wav < mu + 0.013) & (mu - 0.013 < wav))
+    C1 = np.where((wav <= mu + 0.013) & (mu - 0.013 < wav))
     new_wav = wav[C1]
     GAUSSIAN_func = (1/np.sqrt(2*np.pi*(sig**2))) * \
         np.exp(-((new_wav-mu)**2)/(2*sig**2))
@@ -59,13 +59,13 @@ for k in range(len(OMEGAcenter_list)):
     # 畳み込みの台形近似で積分を行う
     S_conv = 0
     for i in range(len(new_wav)-1):
-        S_conv = ((multiple[i]+multiple[i+1])*(new_wav[i+1]-new_wav[i]))/2
+        S_conv += ((multiple[i]+multiple[i+1])*(new_wav[i+1]-new_wav[i]))/2
 
     # ガウシアンの台形近似で積分を行う
     S_gauss = 0
     for i in range(len(new_wav)-1):
-        S_gauss = ((GAUSSIAN_func[i]+GAUSSIAN_func[i+1])
-                   * (new_wav[i+1]-new_wav[i]))/2
+        S_gauss += ((GAUSSIAN_func[i]+GAUSSIAN_func[i+1])
+                    * (new_wav[i+1]-new_wav[i]))/2
 
     # OMEGA channelに落とし込み
     OMEGAchannel[k] = S_conv/S_gauss
@@ -75,7 +75,7 @@ for k in range(len(OMEGAcenter_list)):
 tau_v = np.stack([OMEGAcenter_list, OMEGAchannel], 1)
 np.savetxt('test_OMEGAinstrumentfunction.txt', tau_v, fmt='%.10e')
 
-plt.scatter(OMEGAcenter_list, OMEGAchannel)
+plt.plot(OMEGAcenter_list, OMEGAchannel)
 plt.show()
 
 # %%

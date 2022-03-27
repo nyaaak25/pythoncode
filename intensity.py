@@ -20,8 +20,14 @@ import matplotlib.pyplot as plt
 import scipy.signal as signal
 import scipy.stats as stats
 
+# 波数
+v_txt = np.loadtxt('4545-5556_0.001step_cutoff_120.txt')
+v1 = v_txt[:, 0]  # cm-1
+cm_v = (1/v1)*10000
+wav = cm_v[::-1]  # um
+
 # Optical Depth >> Intensity
-Tau_txt = np.loadtxt('4545-5556_0.0005step_cutoff_120.txt')
+Tau_txt = np.loadtxt('4545-5556_0.001step_cutoff_120.txt')
 Tau = Tau_txt[:, 1]
 v1 = Tau_txt[:, 0]
 v = (1/v1)*10000
@@ -30,27 +36,52 @@ sza_theta = 18.986036
 I0 = np.exp(-Tau/np.cos(sza_theta))
 Iobs = I0 * np.exp(-Tau)
 
-x1 = v
-y1 = Iobs
+# OMEGAのchannel center listとなまらせた後の配列作成
+OMEGAcenter_list = [1.8143300, 1.8284900, 1.8426300, 1.8567700, 1.8708900, 1.8850000, 1.8990901, 1.9131700, 1.9272400, 1.9412900, 1.9553300, 1.9693500, 1.9833500,
+                    1.9973400, 2.0113201, 2.0252800, 2.0392201, 2.0531399, 2.0670500, 2.0809400, 2.0948100, 2.1086600, 2.1224899, 2.1363101, 2.1501000, 2.1638801, 2.1776299]
 
+OMEGAchannel = np.zeros(len(OMEGAcenter_list))
 
-# 装置関数実装部分
-# 畳み込む装置関数定義。OMEGAはGAUSSIUN
-mu_conv = 0.0  # Centroid
-sigma_conv = 0.5  # Width
-convolving_term = stats.norm(mu_conv, sigma_conv)
-xconv = np.linspace(-20, 20, 400000)
-yconv = convolving_term.pdf(xconv)
+# 装置関数実装部分　[GAUSSIAN実装]
+# OMEGAの中心分、装置関数をかけ合わせる
+for k in range(len(OMEGAcenter_list)):
+    # OMEGAの中心波長aについての GAUSSIANを定義
+    mu = OMEGAcenter_list[k]
+    sig = 6.5e-3  # OMEGAの波長分解能は13nm
 
-# 畳み込みを行う部分
-convolved_pdf = signal.convolve(Iobs, yconv, mode='same')/sum(Iobs)
+    # wav 1 ~ wav n までのガウシアンの値を求める
+    C1 = np.where((wav <= mu + 0.013) & (mu - 0.013 < wav))
+    new_wav = wav[C1]
+    GAUSSIAN_func = (1/np.sqrt(2*np.pi*(sig**2))) * \
+        np.exp(-((new_wav-mu)**2)/(2*sig**2))
 
+    # ガウシアンと計算されたスペクトルをかけ合わせる
+    new_I = Iobs[C1]
+    multiple = GAUSSIAN_func * new_I
 
-# plot部分
+    # 畳み込みの台形近似で積分を行う
+    S_conv = 0
+    for i in range(len(new_wav)-1):
+        S_conv += ((multiple[i]+multiple[i+1])*(new_wav[i+1]-new_wav[i]))/2
+
+    # ガウシアンの台形近似で積分を行う
+    S_gauss = 0
+    for i in range(len(new_wav)-1):
+        S_gauss += ((GAUSSIAN_func[i]+GAUSSIAN_func[i+1])
+                    * (new_wav[i+1]-new_wav[i]))/2
+
+    # OMEGA channelに落とし込み
+    OMEGAchannel[k] = S_conv/S_gauss
+    # print(OMEGAchannel)
+
+tau_v = np.stack([OMEGAcenter_list, OMEGAchannel], 1)
+np.savetxt('test_OMEGAinstrumentfunction.txt', tau_v, fmt='%.10e')
+
+# ---------- plot部分 -----------------------------
 fig = plt.figure()
 ax = fig.add_subplot(111, title='CO2')
 ax.grid(c='lightgray', zorder=1)
-ax.plot(x1, y1, color='r', linewidth=0.1)
+ax.plot(OMEGAcenter_list, OMEGAchannel, color='b', linewidth=1)
 # ax.plot(v, convolved_pdf, color='b')
 # ax.set_xlim(4973, 4975)
 # ax.set_yscale('log')
