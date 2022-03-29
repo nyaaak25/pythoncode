@@ -8,12 +8,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-
+"""
 # 波数
 v_txt = np.loadtxt('4545-5556_0.01step_cutoff_120.txt')
 v = v_txt[:, 0]
 
-# 光学的厚み
+# 光学的厚み cut-offでの差を計算させている
 tau_txt = np.loadtxt('4545-5556_0.01step_cutoff_120.txt')
 cut120 = tau_txt[:, 1]
 
@@ -45,6 +45,33 @@ NCut100 = Cut100/Nocut
 x1 = v
 y1 = Nocut
 
+"""
+
+# 装置関数の差を取る
+wav1 = np.loadtxt('0.0005_OMEGAinstrumentfunction.txt')
+wav = wav1[:, 0]
+
+# 0.01のとき
+step01_txt = np.loadtxt('0.01_OMEGAinstrumentfunction.txt')
+step01 = step01_txt[:, 1]
+
+# 0.001のとき
+step001_txt = np.loadtxt('0.001_OMEGAinstrumentfunction.txt')
+step001 = step001_txt[:, 1]
+
+# 0.0005のとき
+step0005_txt = np.loadtxt('0.0005_OMEGAinstrumentfunction.txt')
+step0005 = step0005_txt[:, 1]
+
+# 0.0001のとき
+step0001_txt = np.loadtxt('0.0001_OMEGAinstrumentfunction.txt')
+step0001 = step0001_txt[:, 1]
+
+error1 = (step01 - step0001) * 100 / step0001
+error2 = (step001 - step0001) * 100 / step0001
+error3 = (step0005 - step0001) * 100 / step0001
+
+
 # %%
 # ---------------グラフ作成----------------------
 fig = plt.figure(dpi=200)
@@ -52,22 +79,23 @@ ax = fig.add_subplot(111, title='CO2')
 ax.grid(c='lightgray', zorder=1)
 
 # ----plot 変換--------
-ax.plot(x1, Cut120, color='blue', label="cutoff 120")
-ax.plot(x1, Cut100, color='green', label="cutoff 100")
-ax.plot(x1, Cut80, color='red', label="cutoff 80")
-ax.plot(x1, Cut50, color='orange', label="cutoff 50")
+ax.plot(wav, error1, color='blue', label="0.01")
+ax.plot(wav, error2, color='green', label="0.001")
+ax.plot(wav, error3, color='red', label="0.0005")
+# ax.plot(wav, step0001, color='orange', label="0.0001")
 
 # ------ set axis ----------
 # ax.set_xlim(4958.05, 4958.15)
 # ax.set_xlim(4681.3, 4681.35)
-ax.set_xlim(4800, 5100)
+# ax.set_xlim(4800, 5100)
 # ax.set_ylim(1e-5, 1.8e-5)
-# ax.set_ylim(-0.1, 0.1)
+# ax.set_ylim(0.3, 1.05)
 
 # ----- set label ------
-ax.set_xlabel('Wavenumber [$cm^{-1}$]', fontsize=14)
+# ax.set_xlabel('Wavenumber [$cm^{-1}$]', fontsize=14)
+ax.set_xlabel('Wavelengh [um]', fontsize=14)
 # ax.set_ylabel('error (%)', fontsize=14)
-ax.set_ylabel('Defference[%]', fontsize=14)
+ax.set_ylabel('Defference [%]', fontsize=14)
 # ax.set_ylabel('Transmittance', fontsize=14)
 
 

@@ -23,9 +23,9 @@ wav = cm_v[::-1]  # um
 
 # 光学的厚み→放射強度
 tau_txt = np.loadtxt('4545-5556_0.0001step_cutoff_120.txt')
-tau = tau_txt[:, 1]
+tau1 = tau_txt[:, 1]
+tau = tau1
 sza_theta = 18.986036
-
 I0 = np.exp(-tau/np.cos(sza_theta))
 Iobs = I0 * np.exp(-tau)
 
@@ -40,7 +40,18 @@ OMEGAchannel = np.zeros(len(OMEGAcenter_list))
 #    new_wav = wav[C1]
 #    fx = (1/np.sqrt(2*np.pi*(sig**2)))*np.exp(-((new_wav-mu)**2)/(2*sig**2))
 
+for k in range(len(OMEGAcenter_list)):
+    # OMEGAの中心波長aについての GAUSSIANを定義
+    mu = OMEGAcenter_list[k]
+    sig = 6.5e-3
 
+    # wav 1 ~ wav n までのガウシアンの値を求める
+    C1 = np.where((wav <= mu + 0.013) & (mu - 0.013 < wav))
+    new_wav = wav[C1]
+    new_I = Iobs[C1]
+    average_I = np.sum(new_I)/len(new_I)
+
+"""
 for k in range(len(OMEGAcenter_list)):
     # OMEGAの中心波長aについての GAUSSIANを定義
     mu = OMEGAcenter_list[k]
@@ -77,7 +88,7 @@ np.savetxt('test_OMEGAinstrumentfunction.txt', tau_v, fmt='%.10e')
 
 plt.plot(OMEGAcenter_list, OMEGAchannel)
 plt.show()
-
+"""
 # %%
 
 

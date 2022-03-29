@@ -21,16 +21,15 @@ import scipy.signal as signal
 import scipy.stats as stats
 
 # 波数
-v_txt = np.loadtxt('4545-5556_0.001step_cutoff_120.txt')
+v_txt = np.loadtxt('4545-5556_0.01step_cutoff_120.txt')
 v1 = v_txt[:, 0]  # cm-1
 cm_v = (1/v1)*10000
 wav = cm_v[::-1]  # um
 
 # Optical Depth >> Intensity
-Tau_txt = np.loadtxt('4545-5556_0.001step_cutoff_120.txt')
-Tau = Tau_txt[:, 1]
-v1 = Tau_txt[:, 0]
-v = (1/v1)*10000
+Tau_txt = np.loadtxt('4545-5556_0.01step_cutoff_120.txt')
+Tau1 = Tau_txt[:, 1]
+Tau = Tau1[::-1]
 sza_theta = 18.986036
 
 I0 = np.exp(-Tau/np.cos(sza_theta))
@@ -75,7 +74,7 @@ for k in range(len(OMEGAcenter_list)):
     # print(OMEGAchannel)
 
 tau_v = np.stack([OMEGAcenter_list, OMEGAchannel], 1)
-np.savetxt('test_OMEGAinstrumentfunction.txt', tau_v, fmt='%.10e')
+np.savetxt('0.01_OMEGAinstrumentfunction.txt', tau_v, fmt='%.10e')
 
 # ---------- plot部分 -----------------------------
 fig = plt.figure()
