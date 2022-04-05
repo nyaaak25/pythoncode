@@ -8,15 +8,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-"""
+
 # 波数
 v_txt = np.loadtxt('4545-5556_0.01step_cutoff_120.txt')
-v = v_txt[:, 0]
+v1 = v_txt[:, 0]
+cm_v = (1/v1)*10000
+v = cm_v[::-1]
 
 # 光学的厚み cut-offでの差を計算させている
 tau_txt = np.loadtxt('4545-5556_0.01step_cutoff_120.txt')
-cut120 = tau_txt[:, 1]
+cut120_1 = tau_txt[:, 1]
+cut120 = cut120_1[::-1]
+sza_theta = 18.986036
+I0 = np.exp(-cut120/np.cos(sza_theta))
+Iobs = I0 * np.exp(-cut120)
 
+"""
 tau_txt1 = np.loadtxt('4545-5556_0.01step_cutoff_80.txt')
 cut80 = tau_txt1[:, 1]
 
@@ -44,7 +51,6 @@ NCut100 = Cut100/Nocut
 
 x1 = v
 y1 = Nocut
-
 """
 
 # 装置関数の差を取る
@@ -67,21 +73,56 @@ step0005 = step0005_txt[:, 1]
 step0001_txt = np.loadtxt('0.0001_OMEGAinstrumentfunction.txt')
 step0001 = step0001_txt[:, 1]
 
+# BOX関数の平均
+# 0.01のとき
+box01_txt = np.loadtxt('0.01_BOXinstrumentfunction.txt')
+box01 = box01_txt[:, 1]
+
+# 0.001のとき
+box001_txt = np.loadtxt('0.001_BOXinstrumentfunction.txt')
+box001 = box001_txt[:, 1]
+
+# 0.0005のとき
+box0005_txt = np.loadtxt('0.0005_BOXinstrumentfunction.txt')
+box0005 = box0005_txt[:, 1]
+
+# 0.0001のとき
+box0001_txt = np.loadtxt('0.0001_BOXinstrumentfunction.txt')
+box0001 = box0001_txt[:, 1]
+
+# 標準偏差の違うGAUSSIAN
+gauss001_txt = np.loadtxt('instrumentfunction_001.txt')
+gauss001 = gauss001_txt[:, 1]
+
+gauss100_txt = np.loadtxt('instrumentfunction_100.txt')
+gauss100 = gauss100_txt[:, 1]
+
 error1 = (step01 - step0001) * 100 / step0001
 error2 = (step001 - step0001) * 100 / step0001
 error3 = (step0005 - step0001) * 100 / step0001
+
+error4 = (step0001 - box0001)  # * 100 / box0001
+error5 = (step001 - box001)  # * 100 / box001
+error6 = (step0005 - box0005)  # * 100 / box0005
+error7 = (step01 - box01) * 100 / box01
+
+error10 = (box01 - gauss001) * 100 / box01
+error11 = (box01 - gauss100) * 100 / box01
 
 
 # %%
 # ---------------グラフ作成----------------------
 fig = plt.figure(dpi=200)
-ax = fig.add_subplot(111, title='CO2')
+ax = fig.add_subplot(111, title='sigma / 100')
 ax.grid(c='lightgray', zorder=1)
 
 # ----plot 変換--------
-ax.plot(wav, error1, color='blue', label="0.01")
-ax.plot(wav, error2, color='green', label="0.001")
-ax.plot(wav, error3, color='red', label="0.0005")
+# zorderで表示順が決められる。値が大きいほど前面に出てくる。lwはplotの線の太さが変更可能。
+# ax.plot(v, Iobs, color='blue', label="difference", zorder=2,lw=0.1)
+ax.plot(wav, gauss001, color='red', zorder=1, label="0.01")
+# ax.plot(wav, error10, color='green', zorder=1, label="box 0.01")
+# ax.plot(wav, error11, color='orange', zorder=1,label="box 100")
+# ax.scatter(wav, step01, color='red', zorder=2)
 # ax.plot(wav, step0001, color='orange', label="0.0001")
 
 # ------ set axis ----------
@@ -93,9 +134,9 @@ ax.plot(wav, error3, color='red', label="0.0005")
 
 # ----- set label ------
 # ax.set_xlabel('Wavenumber [$cm^{-1}$]', fontsize=14)
-ax.set_xlabel('Wavelengh [um]', fontsize=14)
+ax.set_xlabel('Wavelengh [μm]', fontsize=14)
 # ax.set_ylabel('error (%)', fontsize=14)
-ax.set_ylabel('Defference [%]', fontsize=14)
+ax.set_ylabel('Defference [Transmittance]', fontsize=14)
 # ax.set_ylabel('Transmittance', fontsize=14)
 
 
@@ -103,7 +144,7 @@ ax.set_ylabel('Defference [%]', fontsize=14)
 # ax.set_yscale('log')
 plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
 h1, l1 = ax.get_legend_handles_labels()
-ax.legend(h1, l1, loc='upper right', fontsize=6)
+ax.legend(h1, l1, loc='lower right', fontsize=6)
 plt.show()
 
 # %%

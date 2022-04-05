@@ -16,15 +16,15 @@ import numpy as np
 import matplotlib.pylab as plt
 
 # 波数
-v_txt = np.loadtxt('4545-5556_0.0001step_cutoff_120.txt')
+v_txt = np.loadtxt('4545-5556_0.01step_cutoff_120.txt')
 v1 = v_txt[:, 0]  # cm-1
 cm_v = (1/v1)*10000
 wav = cm_v[::-1]  # um
 
 # 光学的厚み→放射強度
-tau_txt = np.loadtxt('4545-5556_0.0001step_cutoff_120.txt')
+tau_txt = np.loadtxt('4545-5556_0.01step_cutoff_120.txt')
 tau1 = tau_txt[:, 1]
-tau = tau1
+tau = tau1[::-1]
 sza_theta = 18.986036
 I0 = np.exp(-tau/np.cos(sza_theta))
 Iobs = I0 * np.exp(-tau)
@@ -49,8 +49,17 @@ for k in range(len(OMEGAcenter_list)):
     C1 = np.where((wav <= mu + 0.013) & (mu - 0.013 < wav))
     new_wav = wav[C1]
     new_I = Iobs[C1]
-    average_I = np.sum(new_I)/len(new_I)
+    average_I = np.average(new_I)
 
+    OMEGAchannel[k] = average_I
+
+tau_v = np.stack([OMEGAcenter_list, OMEGAchannel], 1)
+np.savetxt('0.01_BOXinstrumentfunction.txt', tau_v, fmt='%.10e')
+
+plt.plot(OMEGAcenter_list, OMEGAchannel)
+plt.show()
+
+# %%
 """
 for k in range(len(OMEGAcenter_list)):
     # OMEGAの中心波長aについての GAUSSIANを定義

@@ -17,8 +17,9 @@ created on Thu Mar 24 14:48:00 2022
 # library import
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy.signal as signal
-import scipy.stats as stats
+from scipy.io import readsav
+import scipy.io as sio
+from os.path import dirname, join as pjoin
 
 # 波数
 v_txt = np.loadtxt('4545-5556_0.01step_cutoff_120.txt')
@@ -41,12 +42,14 @@ OMEGAcenter_list = [1.8143300, 1.8284900, 1.8426300, 1.8567700, 1.8708900, 1.885
 
 OMEGAchannel = np.zeros(len(OMEGAcenter_list))
 
+# %%
 # 装置関数実装部分　[GAUSSIAN実装]
 # OMEGAの中心分、装置関数をかけ合わせる
 for k in range(len(OMEGAcenter_list)):
     # OMEGAの中心波長aについての GAUSSIANを定義
     mu = OMEGAcenter_list[k]
-    sig = 6.5e-3  # OMEGAの波長分解能は13nm
+    # sig = 6.5e-3  # OMEGAの波長分解能は13nm
+    sig = 6.5e-1
 
     # wav 1 ~ wav n までのガウシアンの値を求める
     C1 = np.where((wav <= mu + 0.013) & (mu - 0.013 < wav))
@@ -74,13 +77,25 @@ for k in range(len(OMEGAcenter_list)):
     # print(OMEGAchannel)
 
 tau_v = np.stack([OMEGAcenter_list, OMEGAchannel], 1)
-np.savetxt('0.01_OMEGAinstrumentfunction.txt', tau_v, fmt='%.10e')
+# np.savetxt('instrumentfunction_001.txt', tau_v, fmt='%.10e')
+
+# 観測スペクトルと比較
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname = 'ORB0006_1.sav'
+sav_data = readsav(sav_fname)
+print(sav_data.keys())
+wvl = sav_data['wvl']
+
+CO2 = np.where((wvl > 1.8) & (wvl < 2.2))
+CO2_wav = wvl[CO2]
+
 
 # ---------- plot部分 -----------------------------
 fig = plt.figure()
 ax = fig.add_subplot(111, title='CO2')
 ax.grid(c='lightgray', zorder=1)
-ax.plot(OMEGAcenter_list, OMEGAchannel, color='b', linewidth=1)
+ax.plot(new_wav, GAUSSIAN_func, color='b', linewidth=1)
+# ax.plot(OMEGAcenter_list, OMEGAchannel, color='b', linewidth=1)
 # ax.plot(v, convolved_pdf, color='b')
 # ax.set_xlim(4973, 4975)
 # ax.set_yscale('log')
