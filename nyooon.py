@@ -12,10 +12,27 @@ from memory_profiler import profile
 import time
 from numba import jit, f8
 
+
+# Look Up Tabel用のprofileを読み込み
+def filesearch(dir):
+    # 指定されたディレクトリ内の全てのファイルを取得
+    path_list = glob.glob("LookUpTable_HTP/*.txt")
+    name_list = []                          # ファイル名の空リストを定義
+    ext_list = []                           # 拡張子の空リストを定義
+    out_list = []                           # 保存パスの空リストを定義
+
+    # ファイルのフルパスからファイル名と拡張子を抽出
+    for i in path_list:
+        file = os.path.basename(i)          # 拡張子ありファイル名を取得
+        name, ext = os.path.splitext(file)  # 拡張子なしファイル名と拡張子を取得
+        name_list.append(name)              # 拡張子なしファイル名をリスト化
+        ext_list.append(ext)                # 拡張子をリスト化
+        out_list.append(os.path.join(
+            *[dir, name + '_resize' + ext]))  # 保存パスを作成
+    return path_list, name_list, ext_list, out_list
 # %%
 # 気圧と温度プロファイルを導出する
 
-import numpy as np
 
 # parameter指定 MKS単位系
 g = 3.72  # m s-1

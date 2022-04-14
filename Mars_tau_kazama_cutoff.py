@@ -22,6 +22,9 @@ created on Fri Jan 14 15:22:00 2022
 ver. 4.0: cut-off導入
 created on Wed Feb 16 19:12:00 2022
 
+ver. 5.0: Look Up Tableの原型を作成 : 気圧・温度profile方向に回す
+created on Thu Apr 14 18:32:00 2022
+
 """
 # %%
 # インポート
@@ -31,6 +34,8 @@ import pandas as pd
 from memory_profiler import profile
 import time
 from numba import jit, f8
+import glob
+import os
 
 # HITRAN dataを読み込み
 Hitrandata = np.loadtxt('4545-5556_hitrandata.txt')
@@ -51,17 +56,42 @@ c2 = (h*c)/k  # cm K (hc / k)
 Na = 6.02214129E+23
 M = 43.98983  # g molcules-1 CO2
 
+# Look Up Tabel用のprofileを読み込み
+
+
+def filesearch(dir):
+    # 指定されたディレクトリ内の全てのファイルを取得
+    path_list = glob.glob("LookUpTable_HTP/*.txt")
+    name_list = []                          # ファイル名の空リストを定義
+
+    # ファイルのフルパスからファイル名と拡張子を抽出
+    for i in path_list:
+        file = os.path.basename(i)          # 拡張子ありファイル名を取得
+        name, ext = os.path.splitext(file)  # 拡張子なしファイル名と拡張子を取得
+        name_list.append(name)              # 拡張子なしファイル名をリスト化
+    return path_list, name_list
+
+
+# ファイル情報を取得する関数を実行
+path_list, name_list = filesearch('dir')
+# print(path_list[1]) :: 絶対pathでfile名を持ってきてくれている。これをfor文で回せば全部のprofileに対して吸収係数を計算してくれる
+# memo: 今度はこのpathを使用して、Qを作って、そのQから吸収係数を作成する！！！
+
+
 # 温度
-T_txt = np.loadtxt('Temp_pres_Kazama.dat')
-T = T_txt[:, 1]
+# T_txt = np.loadtxt('Temp_pres_Kazama.dat')
+T_txt = np.loadtxt('LookUpTable_HTP/pre_temp_profile.txt')
+T = T_txt[:, 2]
 Tref = 296  # K
 
 # 圧力
-P_txt = np.loadtxt('Temp_pres_Kazama.dat')
-P = (P_txt[:, 2])*10  # Pa⇒Barye
+# P_txt = np.loadtxt('Temp_pres_Kazama.dat')
+P_txt = np.loadtxt('LookUpTable_HTP/pre_temp_profile.txt')
+P = (P_txt[:, 1])*10  # Pa⇒Barye
 
 # Q(T)　温度によって変更、ここのInputfileの計算は別プログラム(Qcaluculation.py)
-Q_CO2 = pd.read_csv(filepath_or_buffer="CO2_Q.csv", encoding="cp932", sep=",")
+Q_CO2 = pd.read_csv(filepath_or_buffer="CO2_Q_1.csv",
+                    encoding="cp932", sep=",")
 QT = Q_CO2['Q']
 QT = QT.to_numpy()
 Qref = 286.09
@@ -77,7 +107,7 @@ nd = P / (k * T)
 
 # 波数幅: 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1
 # plotする範囲の波数
-dv = 0.0001
+dv = 0.01
 cut = 120
 v_all = np.arange(4545, 5556, dv)
 
@@ -352,6 +382,8 @@ def main():
     # 吸収線の要素番号(k)でループ
     # tausumは計算軸の長さ。(cut-off分が込み)
     tausum = np.zeros((len(vk_all)))
+    sigmasum = np.zeros((len(T), len(vk_all)))
+    sigma0 = np.zeros((len(T), len(v_all)))
 
     for k in range(len(vij)):
         start = time.time()
@@ -384,9 +416,12 @@ def main():
             mini_range[0].size  # mini rangeのサイズ (on 計算軸)
 
         tausum[mini_range_inti:mini_range_end] += tauk
+        sigmasum[:, mini_range_inti:mini_range_end] += sigmak
 
         # 計算軸からもとの波数軸に戻す。(cut-off分を切り落とす)
         tausum0 = tausum[addv_m.size:tausum.size-addv_p.size]
+        sigma0 = sigmasum[:, addv_m.size:tausum.size-addv_p.size]
+        new_sigma = sigma0.T
         if k % 100 == 0:  # ループにかかる時間を出力(5000回に1度)
             print('1ループの所要時間: ', time.time()-start)
             print('今なんループ？', k)
@@ -408,7 +443,8 @@ def main():
 
     # データセーブ
     tau_v = np.stack([v_all, tausum0], 1)
-    np.savetxt('4545-5556_0.0001step_cutoff_120.txt', tau_v, fmt='%.10e')
+    np.savetxt('Tau_file/LUtable_1_tau.txt', tau_v, fmt='%.10e')
+    np.savetxt('LookUpTable_Kw/LUtable_1_Kw.txt', new_sigma, fmt='%.10e')
 
     # 凡例
     h1, l1 = ax.get_legend_handles_labels()
