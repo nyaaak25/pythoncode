@@ -106,7 +106,7 @@ Pself = mixCO2*P
 # nd=((Pself*Na)/(R*T))
 nd = P / (k * T)
 
-
+# %%
 # 波数幅: 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1
 # plotする範囲の波数
 dv = 0.01
@@ -362,8 +362,8 @@ def crosssection(Sk, Kk, v_len):
 
 def absorptioncoffience(sigmak, v_len):
     Kw = np.zeros((len(T), v_len))
-    for i in range(len(T)):
-        Kw = sigmak[i, :] * nd[i]
+    for i in range(v_len):
+        Kw = sigmak[:, i] * nd  # cm-1
 
     return Kw
 
