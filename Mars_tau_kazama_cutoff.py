@@ -1,5 +1,6 @@
 # %%
 """
+
 -*- coding: utf-8 -*-
 光学的厚みを計算させるプログラム
 Created on Sun Apr 20 15:32:00 2021
@@ -24,6 +25,7 @@ created on Wed Feb 16 19:12:00 2022
 
 ver. 5.0: Look Up Tableの原型を作成 : 気圧・温度profile方向に回す
 created on Thu Apr 14 18:32:00 2022
+
 
 """
 # %%
@@ -345,7 +347,7 @@ def Sintensity(Ek, Sijk, vijk):
     return S
 
 
-# (7)吸収係数σ(z, ν)
+# (7)吸収断面積σ(z, ν)
 @jit
 def crosssection(Sk, Kk, v_len):
     sigma = np.zeros((len(T), v_len))
@@ -354,6 +356,16 @@ def crosssection(Sk, Kk, v_len):
     # print('吸収係数', sigma)
 
     return sigma.T
+
+# (8) 吸収係数 Kw
+
+
+def absorptioncoffience(sigmak, v_len):
+    Kw = np.zeros((len(T), v_len))
+    for i in range(len(T)):
+        Kw = sigmak[i, :] * nd[i]
+
+    return Kw
 
 
 # (8-1)光学的厚みτ(ν)：シングルライン計算
@@ -382,8 +394,8 @@ def main():
     # 吸収線の要素番号(k)でループ
     # tausumは計算軸の長さ。(cut-off分が込み)
     tausum = np.zeros((len(vk_all)))
-    sigmasum = np.zeros((len(T), len(vk_all)))
-    sigma0 = np.zeros((len(T), len(v_all)))
+    Kwsum = np.zeros((len(T), len(vk_all)))
+    Kw0 = np.zeros((len(T), len(v_all)))
 
     for k in range(len(vij)):
         start = time.time()
@@ -408,6 +420,7 @@ def main():
         Kk = Voigt(xk, yk, vDk, v_len)  # ここがネック[edited by shin]
         Sk = Sintensity(Ek, Sijk, vijk)
         sigmak = crosssection(Sk, Kk, v_len)
+        Kwk = absorptioncoffience(sigmak, v_len)
         tauk = tau_absorption(sigmak, v_len)
         # print(tauk)
 
@@ -416,12 +429,12 @@ def main():
             mini_range[0].size  # mini rangeのサイズ (on 計算軸)
 
         tausum[mini_range_inti:mini_range_end] += tauk
-        sigmasum[:, mini_range_inti:mini_range_end] += sigmak
+        Kwsum[:, mini_range_inti:mini_range_end] += Kwk
 
         # 計算軸からもとの波数軸に戻す。(cut-off分を切り落とす)
         tausum0 = tausum[addv_m.size:tausum.size-addv_p.size]
-        sigma0 = sigmasum[:, addv_m.size:tausum.size-addv_p.size]
-        new_sigma = sigma0.T
+        Kw0 = Kwsum[:, addv_m.size:tausum.size-addv_p.size]
+        new_Kw = Kw0.T
         if k % 100 == 0:  # ループにかかる時間を出力(5000回に1度)
             print('1ループの所要時間: ', time.time()-start)
             print('今なんループ？', k)
@@ -442,9 +455,9 @@ def main():
     plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
 
     # データセーブ
-    tau_v = np.stack([v_all, tausum0], 1)
-    np.savetxt('Tau_file/LUtable_1_tau.txt', tau_v, fmt='%.10e')
-    np.savetxt('LookUpTable_Kw/LUtable_1_Kw.txt', new_sigma, fmt='%.10e')
+    # tau_v = np.stack([v_all, tausum0], 1)
+    # np.savetxt('Tau_file/LUtable_1_tau.txt', tau_v, fmt='%.10e')
+    np.savetxt('LookUpTable_Kw/LUtable_1_Kw.txt', new_Kw, fmt='%.10e')
 
     # 凡例
     h1, l1 = ax.get_legend_handles_labels()

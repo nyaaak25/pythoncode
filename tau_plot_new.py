@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 # 波数
-v_txt = np.loadtxt('4545-5556_0.01step_cutoff_120.txt')
+v_txt = np.loadtxt('test_rad_mono_trans.dat')
 v1 = v_txt[:, 0]
 cm_v = (1/v1)*10000
 v = cm_v[::-1]
@@ -22,6 +22,10 @@ cut120 = cut120_1[::-1]
 sza_theta = 18.986036
 I0 = np.exp(-cut120/np.cos(sza_theta))
 Iobs = I0 * np.exp(-cut120)
+
+In = np.loadtxt('test_rad_mono_trans.dat')
+In_1 = In[:, 1]
+In_2 = In_1[::-1]
 
 """
 tau_txt1 = np.loadtxt('4545-5556_0.01step_cutoff_80.txt')
@@ -52,7 +56,7 @@ NCut100 = Cut100/Nocut
 x1 = v
 y1 = Nocut
 """
-
+"""
 # 装置関数の差を取る
 wav1 = np.loadtxt('0.0005_OMEGAinstrumentfunction.txt')
 wav = wav1[:, 0]
@@ -109,17 +113,17 @@ error7 = (step01 - box01) * 100 / box01
 error10 = (box01 - gauss001) * 100 / box01
 error11 = (box01 - gauss100) * 100 / box01
 
-
+"""
 # %%
 # ---------------グラフ作成----------------------
 fig = plt.figure(dpi=200)
-ax = fig.add_subplot(111, title='sigma / 100')
+ax = fig.add_subplot(111, title='CO2')
 ax.grid(c='lightgray', zorder=1)
 
 # ----plot 変換--------
 # zorderで表示順が決められる。値が大きいほど前面に出てくる。lwはplotの線の太さが変更可能。
-# ax.plot(v, Iobs, color='blue', label="difference", zorder=2,lw=0.1)
-ax.plot(wav, gauss001, color='red', zorder=1, label="0.01")
+ax.plot(v, Iobs, color='blue', label="difference", zorder=2, lw=0.1)
+# ax.plot(v, In_2, color='red', zorder=1, label="0.01")
 # ax.plot(wav, error10, color='green', zorder=1, label="box 0.01")
 # ax.plot(wav, error11, color='orange', zorder=1,label="box 100")
 # ax.scatter(wav, step01, color='red', zorder=2)
@@ -136,8 +140,8 @@ ax.plot(wav, gauss001, color='red', zorder=1, label="0.01")
 # ax.set_xlabel('Wavenumber [$cm^{-1}$]', fontsize=14)
 ax.set_xlabel('Wavelengh [μm]', fontsize=14)
 # ax.set_ylabel('error (%)', fontsize=14)
-ax.set_ylabel('Defference [Transmittance]', fontsize=14)
-# ax.set_ylabel('Transmittance', fontsize=14)
+# ax.set_ylabel('Radiance', fontsize=14)
+ax.set_ylabel('Transmittance', fontsize=14)
 
 
 # 凡例
