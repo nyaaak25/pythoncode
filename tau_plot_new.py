@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 # 波数
 # v_txt = np.loadtxt('test1_trans_mono.dat')
 v_txt = np.loadtxt(
-    '/Users/nyonn/Desktop/pythoncode/Tau_file/Test_LUTable_T1_135_T2_80_PRS308.txt')
+    '/Users/nyonn/Desktop/pythoncode/Tau_file/Test_LUTable_T1_260_T2_80_PRS369.txt')
 v1 = v_txt[:, 0]
 cm_v = (1/v1)*10000
 v = cm_v[::-1]
@@ -20,7 +20,7 @@ v = cm_v[::-1]
 # 光学的厚み cut-offでの差を計算させている
 # In = np.loadtxt('4545-5556_0.01step_cutoff_120.txt')
 tau_txt = np.loadtxt(
-    '/Users/nyonn/Desktop/pythoncode/Tau_file/Test_LUTable_T1_135_T2_80_PRS308.txt')
+    '/Users/nyonn/Desktop/pythoncode/Tau_file/Test_LUTable_T1_260_T2_80_PRS369.txt')
 cut120_1 = tau_txt[:, 1]
 cut120 = cut120_1[::-1]
 # sza_theta = 18.986036
@@ -30,7 +30,7 @@ I0 = np.exp(-cut120/np.cos(sza_theta))
 Iobs = I0 * np.exp(-cut120)
 
 tau_txt1 = np.loadtxt(
-    '/Users/nyonn/Desktop/pythoncode/Tau_file/Test1_LUTable_T1_135_T2_80_PRS308.txt')
+    '/Users/nyonn/Desktop/pythoncode/Tau_file/Test2_LUTable_T1_260_T2_80_PRS369.txt')
 cut12_1 = tau_txt1[:, 1]
 cut12 = cut12_1[::-1]
 

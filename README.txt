@@ -1,5 +1,7 @@
 @author AKira Kazama
 contact: kazama@pparc.gp.tohoku.ac.jp
+・　Kw_calc_multiprocess.py
+LUtable用の吸収係数を並列処理して計算させるプログラムです。
 
 ・　Mars_tau_kazama_cutoff.py
 これは吸収の光学的厚みを計算するプログラム。
