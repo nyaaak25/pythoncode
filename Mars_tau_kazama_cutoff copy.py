@@ -56,8 +56,12 @@ h = 6.62607015E-27  # erg s
 c2 = (h*c)/k  # cm K (hc / k)
 Na = 6.02214129E+23
 M = 43.98983  # g molcules-1 CO2
-
-# Look Up Tabel用のprofileを読み込み
+Tref = 296  # K
+Qref = 286.09
+R = 8.31E+7  # (g*cm^2*s^2)/(mol*K)
+len_T = 31  # len(T)
+Pref = 1013250  # hPa(1atm) --> Ba
+mixCO2 = 0.9532
 
 
 def filesearch(dir):
@@ -75,45 +79,10 @@ def filesearch(dir):
 
 # ファイル情報を取得する関数を実行
 path_list, name_list = filesearch('dir')
-# print(path_list[1]) :: 絶対pathでfile名を持ってきてくれている。これをfor文で回せば全部のprofileに対して吸収係数を計算してくれる
-# memo: 今度はこのpathを使用して、Qを作って、そのQから吸収係数を作成する！！！
 
-# LUT の fileの読み込み
-# for i in range(len(name_list)):
-# for i in range(2):
-# 温度
-# T_txt = np.loadtxt('Temp_pres_Kazama.dat')
-# T_txt = np.loadtxt('LookUpTable_HTP/pre_temp_profile.txt')
-T_txt = np.loadtxt('LookUpTable_HTP/'+str(name_list[1])+'.txt')
-T = T_txt[:, 2]
-Tref = 296  # K
-
-# 圧力
-# P_txt = np.loadtxt('Temp_pres_Kazama.dat')
-P_txt = np.loadtxt('LookUpTable_HTP/'+str(name_list[1])+'.txt')
-P = (P_txt[:, 1])*10  # Pa⇒Barye
-
-# Q(T)　温度によって変更、ここのInputfileの計算は別プログラム(Qcaluculation.py)
-# Q_CO2 = pd.read_csv(filepath_or_buffer="CO2_Q_1.csv",
-#                     encoding="cp932", sep=",")
-Q_CO2 = pd.read_csv(filepath_or_buffer="LookUpTable_Q/"+str(name_list[1])+".csv",
-                    encoding="cp932", sep=",")
-QT = Q_CO2['Q']
-QT = QT.to_numpy()
-Qref = 286.09
-
-# Number Density
-mixCO2 = 0.9532
-Pref = 1013250  # hPa(1atm) --> Ba
-R = 8.31E+7  # (g*cm^2*s^2)/(mol*K)
-Pself = mixCO2*P
-# nd=((Pself*Na)/(R*T))
-nd = P / (k * T)
-
-# %%
 # 波数幅: 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1
 # plotする範囲の波数
-dv = 0.01
+dv = 1.0
 cut = 120
 v_all = np.arange(4545, 5556, dv)
 
@@ -124,11 +93,18 @@ addv_p = np.arange(v_all[-1]+dv, v_all[-1]+cut, dv)
 # 計算軸を足し合わせ。addv_m + v_all + addv_p
 vk_all = np.hstack((addv_m, v_all, addv_p))
 
+
+def NumberDensity(T, P):
+    nd = P / (k * T)
+
+    return nd
+
+
 # (1)ドップラー幅νD(T)
 # Voigt functionの計算まで使用
 
 
-def Doppler(vijk):
+def Doppler(vijk, T):
     vD = ((vijk/c)*((2*k*T*Na)/M)**(1/2))  # cm-1
     # print('ドップラー幅', vD)
 
@@ -137,7 +113,7 @@ def Doppler(vijk):
 # (2)ローレンツ幅νL(p,T)
 
 
-def Lorenz(nairk, gammaairk, gammaselfk):
+def Lorenz(nairk, gammaairk, gammaselfk, T, P):
     Pself = mixCO2*P  # 分圧
     vL = (((Tref/T)**nairk)*(gammaairk*(P-Pself) /
                              Pref+gammaselfk*Pself/Pref))  # cm-1
@@ -150,9 +126,9 @@ def Lorenz(nairk, gammaairk, gammaselfk):
 # (3)x
 
 
-def Voigt_x(vijk, deltaairk, vk, vDk, v_len):
-    x = np.zeros(((len(T), v_len)))
-    vijs = np.zeros((len(T)))
+def Voigt_x(vijk, deltaairk, vk, vDk, v_len, P):
+    x = np.zeros(((len_T, v_len)))
+    vijs = np.zeros((len_T))
     vijs = vijk + ((deltaairk*P/Pref))
     v_new = np.repeat(vk[None, :], 31, axis=0)
     x = (v_new.T-vijs)/vDk
@@ -297,12 +273,12 @@ def K4_calc(xk, yk):
 @jit(nopython=True, fastmath=True)
 def where_func(xk, yk, v_len):
     # |x|+yの計算   # K1, K2, ... の計算部分と同じループに入れる
-    xy = np.zeros((len(T), v_len))
+    xy = np.zeros((len_T, v_len))
     xy = np.abs(xk.T)+yk
     xy = xy.T
 
     # -y + 0.195|x|-0.176の計算 # K1, K2, ... の計算部分と同じループに入れる
-    x_y = np.zeros((len(T), v_len))
+    x_y = np.zeros((len_T, v_len))
     x_y = -yk + 0.195*np.abs(xk.T) - 0.176
     x_y = x_y.T
     # print('X_y', x_y)
@@ -320,10 +296,10 @@ def Voigt(xk, yk, vDk, v_len):
     # functionを呼び出して、tupleで拾う
     C1, C2, C3, C4 = where_func(xk, yk, v_len)
 
-    K1 = np.zeros((len(T), v_len))
-    K2 = np.zeros((len(T), v_len))
-    K3 = np.zeros((len(T), v_len))
-    K4 = np.zeros((len(T), v_len))
+    K1 = np.zeros((len_T, v_len))
+    K2 = np.zeros((len_T, v_len))
+    K3 = np.zeros((len_T, v_len))
+    K4 = np.zeros((len_T, v_len))
 
     # ここがネック[edited by shin]
     K1[C1] = K1_calc(xk, yk)[C1]
@@ -348,7 +324,7 @@ def Voigt(xk, yk, vDk, v_len):
 
 
 @jit
-def Sintensity(Ek, Sijk, vijk):
+def Sintensity(Ek, Sijk, vijk, T, QT):
     S = (Sijk*(Qref/QT)*((np.exp((-c2*Ek)/T))/(np.exp((-c2*Ek)/Tref))) *
          ((1.0-np.exp((-c2*vijk)/T))/(1.0-np.exp((-c2*vijk)/Tref))))  # cm-1/(molecule-1 cm2)
     # print('S', S)
@@ -360,7 +336,7 @@ def Sintensity(Ek, Sijk, vijk):
 
 @jit
 def crosssection(Sk, Kk, v_len):
-    sigma = np.zeros((len(T), v_len))
+    sigma = np.zeros((len_T, v_len))
     sigma = Sk * Kk.T  # molecule-1 cm2 Voigt functionを使用して計算
     # sigma = sigma.T
     # print('吸収係数', sigma)
@@ -370,10 +346,10 @@ def crosssection(Sk, Kk, v_len):
 # (8) 吸収係数 Kw
 
 
-def absorptioncoffience(sigmak, v_len):
-    Kw = np.zeros((len(T), v_len))
+def absorptioncoffience(sigmak, v_len, ndi):
+    Kw = np.zeros((len_T, v_len))
     for i in range(v_len):
-        Kw[:, i] = sigmak[:, i] * nd  # cm-1
+        Kw[:, i] = sigmak[:, i] * ndi  # cm-1
 
     return Kw
 
@@ -381,15 +357,15 @@ def absorptioncoffience(sigmak, v_len):
 
 
 @jit
-def tau_absorption(sigmak, v_len):
+def tau_absorption(sigmak, v_len, ndi):
     tau = np.zeros((v_len))
-    for j in range(len(T)):
+    for j in range(len_T):
         if j == 0:
-            tau = 0.5 * sigmak[j, :]*nd[j]*mixCO2*(2e5)
-        elif j == len(T)-1:
-            tau += 0.5 * sigmak[j, :] * nd[j] * mixCO2 * (2e5)
+            tau = 0.5 * sigmak[j, :]*ndi[j]*mixCO2*(2e5)
+        elif j == len_T-1:
+            tau += 0.5 * sigmak[j, :] * ndi[j] * mixCO2 * (2e5)
         else:
-            tau += 0.5 * sigmak[j, :]*nd[j] * mixCO2 * (4e5)
+            tau += 0.5 * sigmak[j, :]*ndi[j] * mixCO2 * (4e5)
 
 # 適当な温度と適当な温度を使って線の広がりを見る
 # 光学的厚みの足し合わせは、台形近似をして積分を行っている
@@ -405,79 +381,76 @@ def main():
     # 吸収線の要素番号(k)でループ
     # tausumは計算軸の長さ。(cut-off分が込み)
     tausum = np.zeros((len(vk_all)))
-    Kwsum = np.zeros((len(T), len(vk_all)))
-    Kw0 = np.zeros((len(T), len(v_all)))
+    Kwsum = np.zeros((len_T, len(vk_all)))
+    Kw0 = np.zeros((len_T, len(v_all)))
 
-    for k in range(len(vij)):
-        start = time.time()
-        vijk = vij[k]
-        Sijk = Sij[k]
-        gammaselfk = gammaself[k]
-        gammaairk = gammaair[k]
-        Ek = E[k]
-        nairk = nair[k]
-        deltaairk = deltaair[k]
-        # 波数幅を決定。vkにはvmini自体が入っている。
-        mini_range = np.where((vk_all >= vijk - cut)
-                              & (vk_all <= vijk + cut))
-        vk = vk_all[mini_range]
-        v_len = len(vk)
-        vDk = Doppler(vijk)
-        vLk = Lorenz(nairk, gammaairk, gammaselfk)
-        # loopstart = time.time()
-        xk = Voigt_x(vijk, deltaairk, vk, vDk, v_len)
-        # if k % 5000 == 0:  # ループにかかる時間を出力(5000回に1度)
-        #     print('loop time: ', time.time()-loopstart)
-        yk = Voigt_y(vLk, vDk)
-        Kk = Voigt(xk, yk, vDk, v_len)  # ここがネック[edited by shin]
-        Sk = Sintensity(Ek, Sijk, vijk)
-        sigmak = crosssection(Sk, Kk, v_len)
-        Kwk = absorptioncoffience(sigmak, v_len)
-        tauk = tau_absorption(sigmak, v_len)
-        # print(tauk)
+    # 温度・圧力プロファイルで回す
+    # for i in range(len(name_list)):
+    for i in range(2):
+        T_txt = np.loadtxt('LookUpTable_HTP/'+str(name_list[i])+'.txt')
+        T = T_txt[:, 2]
 
-        mini_range_inti = mini_range[0][0]  # mini rangeの開始位置 (on 計算軸)
-        mini_range_end = mini_range_inti + \
-            mini_range[0].size  # mini rangeのサイズ (on 計算軸)
+        # 圧力
+        P_txt = np.loadtxt('LookUpTable_HTP/'+str(name_list[i])+'.txt')
+        P = (P_txt[:, 1])*10  # Pa⇒Barye
 
-        tausum[mini_range_inti:mini_range_end] += tauk
-        Kwsum[:, mini_range_inti:mini_range_end] += Kwk
+        Q_CO2 = pd.read_csv(filepath_or_buffer="LookUpTable_Q/"+str(name_list[i])+".csv",
+                            encoding="cp932", sep=",")
+        QT = Q_CO2['Q']
+        QT = QT.to_numpy()
 
-        # 計算軸からもとの波数軸に戻す。(cut-off分を切り落とす)
-        tausum0 = tausum[addv_m.size:tausum.size-addv_p.size]
-        Kw0 = Kwsum[:, addv_m.size:tausum.size-addv_p.size]
-        new_Kw = Kw0.T
-        if k % 100 == 0:  # ループにかかる時間を出力(5000回に1度)
-            print('1ループの所要時間: ', time.time()-start)
-            print('今なんループ？', k)
+        ndi = NumberDensity(T, P)
 
-    # グラフ作成
-    # データ読み込み&定義
+        # 吸収線方向で回す
+        for k in range(len(vij)):
+            start = time.time()
+            vijk = vij[k]
+            Sijk = Sij[k]
+            gammaselfk = gammaself[k]
+            gammaairk = gammaair[k]
+            Ek = E[k]
+            nairk = nair[k]
+            deltaairk = deltaair[k]
+            # 波数幅を決定。vkにはvmini自体が入っている。
+            mini_range = np.where((vk_all >= vijk - cut)
+                                  & (vk_all <= vijk + cut))
+            vk = vk_all[mini_range]
+            v_len = len(vk)
+            vDk = Doppler(vijk, T)
+            vLk = Lorenz(nairk, gammaairk, gammaselfk, T, P)
+            # loopstart = time.time()
+            xk = Voigt_x(vijk, deltaairk, vk, vDk, v_len, P)
+            # if k % 5000 == 0:  # ループにかかる時間を出力(5000回に1度)
+            #     print('loop time: ', time.time()-loopstart)
+            yk = Voigt_y(vLk, vDk)
+            Kk = Voigt(xk, yk, vDk, v_len)  # ここがネック[edited by shin]
+            Sk = Sintensity(Ek, Sijk, vijk, T, QT)
+            sigmak = crosssection(Sk, Kk, v_len)
+            Kwk = absorptioncoffience(sigmak, v_len, ndi)
+            tauk = tau_absorption(sigmak, v_len, ndi)
+            # print(tauk)
 
-    x1 = v_all
-    y1 = tausum0
+            mini_range_inti = mini_range[0][0]  # mini rangeの開始位置 (on 計算軸)
+            mini_range_end = mini_range_inti + \
+                mini_range[0].size  # mini rangeのサイズ (on 計算軸)
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111, title='CO2')
-    ax.grid(c='lightgray', zorder=1)
-    ax.plot(x1, y1, color='b')
-    # ax.set_xlim(4973, 4975)
-    ax.set_yscale('log')
-    ax.set_xlabel('Wavenumber [$cm^{-1}$]', fontsize=14)
-    plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
+            tausum[mini_range_inti:mini_range_end] += tauk
+            Kwsum[:, mini_range_inti:mini_range_end] += Kwk
+
+            # 計算軸からもとの波数軸に戻す。(cut-off分を切り落とす)
+            tausum0 = tausum[addv_m.size:tausum.size-addv_p.size]
+            Kw0 = Kwsum[:, addv_m.size:tausum.size-addv_p.size]
+            new_Kw = Kw0.T
+            if k % 100 == 0:  # ループにかかる時間を出力(5000回に1度)
+                print('1ループの所要時間: ', time.time()-start)
+                print('今なんループ？', k)
 
     # データセーブ
-    # for i in range(2):
-    tau_v = np.stack([v_all, tausum0], 1)
-    np.savetxt('Tau_file/Test1_' +
-               str(name_list[1])+'.txt', tau_v, fmt='%.10e')
-    np.savetxt('LookUpTable_Kw/Test1_' +
-               str(name_list[1])+'.txt', new_Kw, fmt='%.10e')
-
-    # 凡例
-    h1, l1 = ax.get_legend_handles_labels()
-    ax.legend(h1, l1, loc='lower right', fontsize=14)
-    plt.show()
+        tau_v = np.stack([v_all, tausum0], 1)
+        np.savetxt('Tau_file/Test_' +
+                   str(name_list[i])+'.txt', tau_v, fmt='%.10e')
+        np.savetxt('LookUpTable_Kw/Test_' +
+                   str(name_list[i])+'.txt', new_Kw, fmt='%.10e')
 
 
 if __name__ == '__main__':

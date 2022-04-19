@@ -50,6 +50,8 @@ for i in range(T1.size):
                 else:
                     Temp[l] = T2[j]
 
-            savearray = np.array([Hight, pre, Temp])
+            savearray = np.array([Hight_km, pre, Temp])
             np.savetxt('LookUpTable_HTP/LUTable_T1_'+str(T1[i])+'_T2_'+str(
                 T2[j])+'_PRS'+str(Surface_pressure[k])+'.txt', savearray.T)
+
+# %%
