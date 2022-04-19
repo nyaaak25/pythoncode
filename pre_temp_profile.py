@@ -17,8 +17,8 @@ g = 3.72  # m s-1
 # R = 8.314  # E+7  # (g*cm^2*s^2)/(mol*K)
 R = 192
 
-# Look-up-Table [Forget+, 2007]
-T1 = np.array([160, 213, 260])  # K
+# Look-up-Table [Forget+, 2007] + T1に135, 285を足す
+T1 = np.array([135, 160, 213, 260, 285])  # K
 T2 = np.array([80, 146, 200])  # K
 Surface_pressure = np.array([50, 150, 180, 215, 257, 308,
                              369, 442, 529, 633, 758, 907, 1096, 1300, 1500])  # Pa
