@@ -82,7 +82,7 @@ path_list, name_list = filesearch('dir')
 
 # 波数幅: 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1
 # plotする範囲の波数
-dv = 1.0
+dv = 0.01
 cut = 120
 v_all = np.arange(4545, 5556, dv)
 
@@ -380,20 +380,25 @@ def tau_absorption(sigmak, v_len, ndi):
 def main():
     # 吸収線の要素番号(k)でループ
     # tausumは計算軸の長さ。(cut-off分が込み)
-    tausum = np.zeros((len(vk_all)))
-    Kwsum = np.zeros((len_T, len(vk_all)))
-    Kw0 = np.zeros((len_T, len(v_all)))
+    # 初期化をloopの外でやっていいのか
 
     # 温度・圧力プロファイルで回す
-    # for i in range(len(name_list)):
-    for i in range(2):
+    for i in range(len(name_list)):
+        # for i in range(3):
+        tausum = np.zeros((len(vk_all)))
+        Kwsum = np.zeros((len_T, len(vk_all)))
+        Kw0 = np.zeros((len_T, len(v_all)))
+
+        T = np.zeros(len_T)
         T_txt = np.loadtxt('LookUpTable_HTP/'+str(name_list[i])+'.txt')
         T = T_txt[:, 2]
 
         # 圧力
+        P = np.zeros(len_T)
         P_txt = np.loadtxt('LookUpTable_HTP/'+str(name_list[i])+'.txt')
         P = (P_txt[:, 1])*10  # Pa⇒Barye
 
+        QT = np.zeros(len_T)
         Q_CO2 = pd.read_csv(filepath_or_buffer="LookUpTable_Q/"+str(name_list[i])+".csv",
                             encoding="cp932", sep=",")
         QT = Q_CO2['Q']
@@ -447,9 +452,9 @@ def main():
 
     # データセーブ
         tau_v = np.stack([v_all, tausum0], 1)
-        np.savetxt('Tau_file/Test_' +
+        np.savetxt('Tau_file/Kw_' +
                    str(name_list[i])+'.txt', tau_v, fmt='%.10e')
-        np.savetxt('LookUpTable_Kw/Test_' +
+        np.savetxt('LookUpTable_Kw/Tau_' +
                    str(name_list[i])+'.txt', new_Kw, fmt='%.10e')
 
 

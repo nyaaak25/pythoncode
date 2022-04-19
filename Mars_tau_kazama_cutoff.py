@@ -84,19 +84,19 @@ path_list, name_list = filesearch('dir')
 # 温度
 # T_txt = np.loadtxt('Temp_pres_Kazama.dat')
 # T_txt = np.loadtxt('LookUpTable_HTP/pre_temp_profile.txt')
-T_txt = np.loadtxt('LookUpTable_HTP/'+str(name_list[1])+'.txt')
+T_txt = np.loadtxt('LookUpTable_HTP/'+str(name_list[3])+'.txt')
 T = T_txt[:, 2]
 Tref = 296  # K
 
 # 圧力
 # P_txt = np.loadtxt('Temp_pres_Kazama.dat')
-P_txt = np.loadtxt('LookUpTable_HTP/'+str(name_list[1])+'.txt')
+P_txt = np.loadtxt('LookUpTable_HTP/'+str(name_list[3])+'.txt')
 P = (P_txt[:, 1])*10  # Pa⇒Barye
 
 # Q(T)　温度によって変更、ここのInputfileの計算は別プログラム(Qcaluculation.py)
 # Q_CO2 = pd.read_csv(filepath_or_buffer="CO2_Q_1.csv",
 #                     encoding="cp932", sep=",")
-Q_CO2 = pd.read_csv(filepath_or_buffer="LookUpTable_Q/"+str(name_list[1])+".csv",
+Q_CO2 = pd.read_csv(filepath_or_buffer="LookUpTable_Q/"+str(name_list[3])+".csv",
                     encoding="cp932", sep=",")
 QT = Q_CO2['Q']
 QT = QT.to_numpy()
@@ -469,10 +469,10 @@ def main():
     # データセーブ
     # for i in range(2):
     tau_v = np.stack([v_all, tausum0], 1)
-    np.savetxt('Tau_file/Test1_' +
-               str(name_list[1])+'.txt', tau_v, fmt='%.10e')
-    np.savetxt('LookUpTable_Kw/Test1_' +
-               str(name_list[1])+'.txt', new_Kw, fmt='%.10e')
+    np.savetxt('Tau_file/Tau_' +
+               str(name_list[3])+'.txt', tau_v, fmt='%.10e')
+    np.savetxt('LookUpTable_Kw/Kw_' +
+               str(name_list[3])+'.txt', new_Kw, fmt='%.10e')
 
     # 凡例
     h1, l1 = ax.get_legend_handles_labels()
