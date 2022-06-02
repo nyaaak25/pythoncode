@@ -85,7 +85,7 @@ path_list, name_list = filesearch('dir')
 
 # 波数幅: 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1
 # plotする範囲の波数
-dv = 0.01
+dv = 1.0
 cut = 120
 v_all = np.arange(4545, 5556, dv)
 
@@ -445,18 +445,18 @@ def for_statememt(i):
             print('1ループの所要時間: ', time.time()-start)
             print('今なんループ？', k)
 
-    # データセーブ
-        tau_v = np.stack([v_all, tausum0], 1)
-        np.savetxt('Tau_file/Tau_' +
-                   str(name_list[i])+'.txt', tau_v, fmt='%.10e')
-        np.savetxt('LookUpTable_Kw/Kw_' +
-                   str(name_list[i])+'.txt', new_Kw, fmt='%.10e')
+# データセーブ
+    tau_v = np.stack([v_all, tausum0], 1)
+    np.savetxt('Tau_file/Tau_' +
+               str(name_list[i])+'.txt', tau_v, fmt='%.10e')
+    np.savetxt('LookUpTable_Kw/Kw_' +
+               str(name_list[i])+'.txt', new_Kw, fmt='%.10e')
 
 
 @ profile
 def main():
-    with multiprocessing.Pool(processes=8) as pool:
-        temp_press_list = list(pool.map(for_statememt, range(len(name_list))))
+    with multiprocessing.Pool(processes=3) as pool:
+        temp_press_list = list(pool.map(for_statememt, range(6)))
     temp_press_list = np.array(temp_press_list)
 
 

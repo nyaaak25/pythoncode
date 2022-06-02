@@ -21,17 +21,20 @@ from scipy.io import readsav
 import scipy.io as sio
 from os.path import dirname, join as pjoin
 
+from sympy import OmegaPower
+
 # 波数
-v_txt = np.loadtxt('4545-5556_0.01step_cutoff_120.txt')
+v_txt = np.loadtxt('/Users/nyonn/Desktop/pythoncode/Tau_file/LUtable_1_tau.txt')
 v1 = v_txt[:, 0]  # cm-1
 cm_v = (1/v1)*10000
 wav = cm_v[::-1]  # um
 
 # Optical Depth >> Intensity
-Tau_txt = np.loadtxt('4545-5556_0.01step_cutoff_120.txt')
+Tau_txt = np.loadtxt('/Users/nyonn/Desktop/pythoncode/Tau_file/LUtable_1_tau.txt')
 Tau1 = Tau_txt[:, 1]
 Tau = Tau1[::-1]
-sza_theta = 18.986036
+# sza_theta = 18.986036
+sza_theta = 0
 
 I0 = np.exp(-Tau/np.cos(sza_theta))
 Iobs = I0 * np.exp(-Tau)
@@ -51,7 +54,7 @@ for k in range(len(OMEGAcenter_list)):
     # OMEGAの中心波長aについての GAUSSIANを定義
     mu = OMEGAcenter_list[k]
     # sig = 6.5e-3  # OMEGAの波長分解能は13nm
-    sig = 6.5e-1
+    sig = 6.5e-3
 
     # wav 1 ~ wav n までのガウシアンの値を求める
     C1 = np.where((wav <= mu + 0.013) & (mu - 0.013 < wav))
@@ -81,6 +84,7 @@ for k in range(len(OMEGAcenter_list)):
 tau_v = np.stack([OMEGAcenter_list, OMEGAchannel], 1)
 # np.savetxt('instrumentfunction_001.txt', tau_v, fmt='%.10e')
 
+"""
 # 観測スペクトルと比較
 data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
 sav_fname = 'ORB0006_1.sav'
@@ -90,25 +94,34 @@ wvl = sav_data['wvl']
 
 CO2 = np.where((wvl > 1.8) & (wvl < 2.2))
 CO2_wav = wvl[CO2]
+"""
 
+# ARSMで計算されたものとの比較
+tau_txt = np.loadtxt(
+    '/Users/nyonn/Desktop/pythoncode/not use file/test1_trans.dat')
+cut120_1 = tau_txt[:, 1]
+cut120 = cut120_1[::-1]
 
+error = cut120-OMEGAchannel
 # ---------- plot部分 -----------------------------
 fig = plt.figure()
 ax = fig.add_subplot(111, title='CO2')
 ax.grid(c='lightgray', zorder=1)
-ax.plot(new_wav, GAUSSIAN_func, color='b', linewidth=1)
-# ax.plot(OMEGAcenter_list, OMEGAchannel, color='b', linewidth=1)
-# ax.plot(v, convolved_pdf, color='b')
+ax.plot(OMEGAcenter_list, error, color='b', linewidth=1)
+# ax.plot(OMEGAcenter_list, cut120, color='r',label="ARSM Calc", lw=1)
+# ax.plot(OMEGAcenter_list, OMEGAchannel, color='b',label = "My Calc",lw=1)
 # ax.set_xlim(4973, 4975)
 # ax.set_yscale('log')
 # ax.set_xlabel('Wavenumber [$cm^{-1}$]', fontsize=14)
 ax.set_xlabel('Wavenumber [μm]', fontsize=14)
-ax.set_ylabel('Intensity', fontsize=14)
+ax.set_ylabel('Difference [Transmittance]', fontsize=14)
 plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
 
 # 凡例
 h1, l1 = ax.get_legend_handles_labels()
-ax.legend(h1, l1, loc='lower right', fontsize=14)
+ax.legend(h1, l1, loc='lower right', fontsize=8)
 plt.show()
+
+# %%
 
 # %%

@@ -27,11 +27,12 @@ Surface_pressure = np.array([50, 150, 180, 215, 257, 308,
 Hight_km = np.arange(0, 62, 2)  # km
 Hight = Hight_km * 1000  # m
 
+# %%
 for i in range(T1.size):
     for j in range(T2.size):
         for k in range(Surface_pressure.size):
             # Scale Hight
-            SH = (R*T1[1])/g
+            SH = (R*T1[i])/g
 
             # pressure profile
             pre = Surface_pressure[k] * np.exp(-Hight/SH)
@@ -50,8 +51,8 @@ for i in range(T1.size):
                 else:
                     Temp[l] = T2[j]
 
-            savearray = np.array([Hight_km, pre, Temp])
-            np.savetxt('LookUpTable_HTP/LUTable_T1_'+str(T1[i])+'_T2_'+str(
-                T2[j])+'_PRS'+str(Surface_pressure[k])+'.txt', savearray.T)
+savearray = np.array([Hight_km, pre, Temp])
+np.savetxt('LookUpTable_HTP/LUTable_T1_'+str(T1[i])+'_T2_'+str(
+    T2[j])+'_PRS'+str(Surface_pressure[k])+'.txt', savearray.T)
 
 # %%
