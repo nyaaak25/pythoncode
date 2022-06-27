@@ -12,7 +12,106 @@ from memory_profiler import profile
 import time
 from numba import jit, f8
 
+# linfitさせて吸収の深さを計算する
+ARS = np.loadtxt('SP1_TA1_TB1_SZA1_EA1_PA1_Dust1_WaterI1_SurfaceA1_rad.dat')
+ARS_x = ARS[:, 0]
+ARS_x = (1/ARS_x)*10000
+ARS_x = ARS_x[::-1]
+ARS_y = ARS[:, 1]
+ARS_y = ARS_y[::-1]
 
+# 最小二乗法でfitting
+POLY_x = [ARS_x[0], ARS_x[3], ARS_x[5], ARS_x[23], ARS_x[24], ARS_x[25]]
+POLY_y = [ARS_y[0], ARS_y[3], ARS_y[5], ARS_y[23], ARS_y[24], ARS_y[25]]
+a, b = np.polyfit(POLY_x, POLY_y, 1)
+
+cont0 = b + a*ARS_x
+y_calc = 1 - ARS_y/cont0
+y_total = np.sum(y_calc[7:17])
+
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(111, title='CO2 absorption')
+ax.grid(c='lightgray', zorder=1)
+ax.plot(ARS_x, ARS_y, color='blue', label="fitting", zorder=2)
+ax.plot(ARS_x, cont0, color='red', label="Observation", zorder=1)
+
+# IDLで計算されたものとの整合性を取るテスト
+# %%
+
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname = '/Users/nyonn/IDLWorkspace/Default/savfile/ORB0313_4.sav'
+sav_data = readsav(sav_fname)
+print(sav_data.keys())
+wvl = sav_data['wvl']
+
+specmars = np.loadtxt(
+    '/Users/nyonn/IDLWorkspace/Default/profile/specsol_0403.dat')
+dmars = sav_data['dmars']
+specmars = specmars/dmars/dmars
+
+CO2 = np.where((wvl > 1.81) & (wvl < 2.19))
+specmars = specmars[CO2]
+wvl = wvl[CO2]
+
+jdat = sav_data['jdat']
+nwvl = len(wvl)
+io = len(jdat[1, 1, :])
+ip = len(jdat[:, 1, 1])
+flux = np.zeros((io, nwvl, ip))
+
+for i in range(io):
+    for o in range(ip):
+        # flux[i, :, o] = jdat[o, CO2, i]/specmars
+        flux[i, :, o] = jdat[o, CO2, i]
+
+longi = sav_data['longi']
+lati = sav_data['lati']
+maxlongi = np.max(longi)
+minlongi = np.min(longi)
+maxlati = np.max(lati)
+minlati = np.min(lati)
+
+x = [wvl[0], wvl[3], wvl[5], wvl[23], wvl[24], wvl[25]]
+y = [flux[0, 0, 0], flux[0, 3, 0], flux[0, 5, 0],
+     flux[0, 23, 0], flux[0, 24, 0], flux[0, 25, 0]]
+a, b = np.polyfit(x, y, 1)
+cont = b + a*wvl
+
+radiance = jdat[0, :, 0]
+
+"""
+radiance = [3.04291914e-01, 3.01133918e-01, 2.99194302e-01, 3.01644108e-01,
+       2.93011375e-01, 2.85192736e-01, 2.91648333e-01, 2.87336526e-01,
+       2.97353790e-01, 2.67734043e-01, 1.59216543e-01, 1.92891786e-01,
+       2.73729659e-01, 1.86171653e-01, 7.47282105e-02, 1.98996083e-01,
+       np.nan, 1.82028307e-01, 1.88777015e-01, 2.46611916e-01,
+       2.74026413e-01, 2.91733514e-01, 2.99147348e-01, 3.06648120e-01,
+       2.97765150e-01, 2.98931135e-01, np.nan]
+"""
+
+radiance = [6.0231223e+00, 5.8426933e+00, 5.6736460e+00, 5.5487056e+00,
+            5.1142383e+00, 4.8854246e+00, 4.9333162e+00, 4.7842565e+00,
+            4.7933760e+00, 4.1179385e+00, 2.4188302e+00, 2.8826861e+00,
+            3.9918549e+00, 2.6615460e+00, 1.0469103e+00, 2.7060721e+00,
+            np.nan, 2.3625975e+00, 2.3858469e+00, 3.0465832e+00,
+            3.2991776e+00, 3.4420812e+00, 3.4416115e+00, 3.4568799e+00,
+            3.2720873e+00, 3.1409810e+00, np.nan]
+
+width = 1 - (radiance/cont)
+band = np.where((wvl >= 1.9) & (wvl <= 2.1))
+obs_spec = np.nansum(width[band])
+
+
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(111, title='CO2 absorption')
+ax.grid(c='lightgray', zorder=1)
+ax.plot(wvl, cont, color='red', label="fitting", zorder=2)
+ax.plot(wvl, radiance, color='blue', label="Observation", zorder=1)
+
+# where_xyzでくじけてやめた
+
+
+# %%
 # Look Up Tabel用のprofileを読み込み
 def filesearch(dir):
     # 指定されたディレクトリ内の全てのファイルを取得
