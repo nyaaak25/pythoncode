@@ -12,8 +12,26 @@ from memory_profiler import profile
 import time
 from numba import jit, f8
 
+# %%
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname = 'work_ORB0920_3.sav'
+sav_data = readsav(sav_fname)
+print(sav_data.keys())
+lati = sav_data['lati']
+longi = sav_data['longi']
+pressure1[pressure1 <= 0] = np.nan
+
+fig = plt.figure(figsize=(6, 13), dpi=200)
+ax = fig.add_subplot(111, title='CO2 absorption')
+ax.set_xlim(271, 278)
+ax.set_ylim(50, 61)
+im = ax.scatter(longi, lati, c=pressure1, s=2)
+fig.colorbar(im, orientation='horizontal')
+
+# %%
 # linfitさせて吸収の深さを計算する
-ARS = np.loadtxt('SP1_TA1_TB1_SZA1_EA1_PA1_Dust1_WaterI1_SurfaceA1_rad.dat')
+ARS = np.loadtxt(
+    '/Users/nyonn/Desktop/pythoncode/ARS_calc/SP12_TA1_TB1_SZA1_EA1_PA1_Dust1_WaterI1_SurfaceA1_rad.dat')
 ARS_x = ARS[:, 0]
 ARS_x = (1/ARS_x)*10000
 ARS_x = ARS_x[::-1]
@@ -27,13 +45,15 @@ a, b = np.polyfit(POLY_x, POLY_y, 1)
 
 cont0 = b + a*ARS_x
 y_calc = 1 - ARS_y/cont0
-y_total = np.sum(y_calc[7:17])
+y_total = np.sum(y_calc[6:17])
 
 fig = plt.figure(dpi=200)
 ax = fig.add_subplot(111, title='CO2 absorption')
 ax.grid(c='lightgray', zorder=1)
 ax.plot(ARS_x, ARS_y, color='blue', label="fitting", zorder=2)
 ax.plot(ARS_x, cont0, color='red', label="Observation", zorder=1)
+ax.axvline(x=ARS_x[9])
+ax.axvline(x=ARS_x[19])
 
 # IDLで計算されたものとの整合性を取るテスト
 # %%
@@ -72,8 +92,8 @@ minlongi = np.min(longi)
 maxlati = np.max(lati)
 minlati = np.min(lati)
 
-x = [wvl[0], wvl[3], wvl[5], wvl[23], wvl[24], wvl[25]]
-y = [flux[0, 0, 0], flux[0, 3, 0], flux[0, 5, 0],
+x = [wvl[0], wvl[1], wvl[2], wvl[23], wvl[24], wvl[25]]
+y = [flux[0, 0, 0], flux[0, 1, 0], flux[0, 2, 0],
      flux[0, 23, 0], flux[0, 24, 0], flux[0, 25, 0]]
 a, b = np.polyfit(x, y, 1)
 cont = b + a*wvl
@@ -99,7 +119,7 @@ radiance = [6.0231223e+00, 5.8426933e+00, 5.6736460e+00, 5.5487056e+00,
             3.2720873e+00, 3.1409810e+00, np.nan]
 
 width = 1 - (radiance/cont)
-band = np.where((wvl >= 1.9) & (wvl <= 2.1))
+band = np.where((wvl >= 1.94) & (wvl <= 1.99))
 obs_spec = np.nansum(width[band])
 
 
@@ -108,6 +128,9 @@ ax = fig.add_subplot(111, title='CO2 absorption')
 ax.grid(c='lightgray', zorder=1)
 ax.plot(wvl, cont, color='red', label="fitting", zorder=2)
 ax.plot(wvl, radiance, color='blue', label="Observation", zorder=1)
+ax.scatter(x, y)
+ax.axvline(x=wvl[9])
+ax.axvline(x=wvl[12])
 
 # where_xyzでくじけてやめた
 
