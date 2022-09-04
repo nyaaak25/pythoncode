@@ -19,13 +19,15 @@ sav_data = readsav(sav_fname)
 print(sav_data.keys())
 lati = sav_data['lati']
 longi = sav_data['longi']
-pressure1[pressure1 <= 0] = np.nan
+
+pressure = sav_data['pressure']
+pressure[pressure <= 0] = np.nan
 
 fig = plt.figure(figsize=(6, 13), dpi=200)
 ax = fig.add_subplot(111, title='CO2 absorption')
 ax.set_xlim(271, 278)
 ax.set_ylim(50, 61)
-im = ax.scatter(longi, lati, c=pressure1, s=2)
+im = ax.scatter(longi, lati, c=pressure, s=2)
 fig.colorbar(im, orientation='horizontal')
 
 # %%

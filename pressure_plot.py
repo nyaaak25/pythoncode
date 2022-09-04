@@ -16,7 +16,7 @@ fig = plt.figure(dpi=200)
 ax = fig.add_subplot(111, title='CO2 absorption')
 ax.grid(c='lightgray', zorder=1)
 ax.set_xlabel('Wavenumber [μm]', fontsize=10)
-ax.set_ylabel('Diference', fontsize=10)
+ax.set_ylabel('width', fontsize=10)
 
 Pa_list = ['Pa=50', 'Pa=150', 'Pa=180', 'Pa=215', 'Pa=257', 'Pa=308', 'Pa=369',
            'Pa=442', 'Pa=529', 'Pa=633', 'Pa=758', 'Pa=907', 'Pa=1096', 'Pa=1300', 'Pa=1500']
@@ -33,7 +33,7 @@ Albedo_list = ['Albedo=0.05', 'Albedo=0.1', 'ALbedo=0.2',
 
 for i in range(1, 15, 1):
     ARS = np.loadtxt('/Users/nyonn/Desktop/pythoncode/ARS_calc/SP' +
-                     str(i)+'_TA1_TB1_SZA1_EA1_PA1_Dust1_WaterI1_SurfaceA1_rad.dat')
+                     str(i)+'_TA3_TB2_SZA4_EA2_PA2_Dust1_WaterI1_SurfaceA3_rad.dat')
     ARS_x = ARS[:, 0]
     ARS_x = (1/ARS_x)*10000
     ARS_x = ARS_x[::-1]
@@ -50,9 +50,9 @@ for i in range(1, 15, 1):
 
     error1 = (ARS_y1 - ARS_y) * 100 / ARS_y
 
-    ax.plot(ARS_x, error1, label=Pa_list[i]+"-"+Pa_list[i-1])
-    ax.set_xlim(1.81, 1.825)
-    ax.set_ylim(-1e-15, 1e-15)
+    ax.plot(ARS_x, ARS_y, label=Pa_list[i])
+    # ax.set_xlim(1.81, 1.825)
+    # ax.set_ylim(-1e-15, 1e-15)
 h1, l1 = ax.get_legend_handles_labels()
 ax.legend(h1, l1, loc='lower right', fontsize=5)
 
@@ -86,7 +86,7 @@ ax.plot(ARS_x, error1)
 # SZA＝0、EA=0, PA=0, TA=135, TB=80, SurfaceA=0.05, waterI=0, Dust=0
 for i in range(1, 16, 1):
     ARS = np.loadtxt('/Users/nyonn/Desktop/pythoncode/ARS_calc/SP' +
-                     str(i)+'_TA1_TB1_SZA1_EA1_PA1_Dust1_WaterI1_SurfaceA1_rad.dat')
+                     str(i)+'_TA3_TB2_SZA4_EA2_PA2_Dust1_WaterI1_SurfaceA3_rad.dat')
     ARS_x = ARS[:, 0]
     ARS_x = (1/ARS_x)*10000
     ARS_x = ARS_x[::-1]
@@ -106,7 +106,7 @@ for i in range(1, 16, 1):
 
 h1, l1 = ax.get_legend_handles_labels()
 ax.legend(h1, l1, loc='lower right', fontsize=5)
-fig.savefig(
-    "/Users/nyonn/Desktop/plot_image/TA1_TB1_SZA1_EA1_PA1_Dust1_WaterI1_SurfaceA1.png")
+# fig.savefig(
+#     "/Users/nyonn/Desktop/plot_image/TA1_TB1_SZA1_EA1_PA1_Dust1_WaterI1_SurfaceA1.png")
 plt.show()
 # %%
