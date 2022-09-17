@@ -341,7 +341,6 @@ y_calc[16] = np.nan
 
 print(1-y_calc)
 
-
 # %%
 # Forgetの1036 Paと比較
 # OMEGA dataとARS dataのfittingをみる
@@ -367,6 +366,9 @@ c, d = np.polyfit(x, y, 1)
 cont = d + c*wvl
 
 OMEGA_calc = flux/cont
+OMEGA_calc = 1 - flux/cont
+OMEGA_calc = OMEGA_calc[0, :]
+spec = np.nansum(OMEGA_calc[band])
 
 fig = plt.figure(dpi=200)
 ax = fig.add_subplot(111, title='CO2 absorption')
@@ -401,6 +403,8 @@ a, b = np.polyfit(POLY_x, POLY_y, 1)
 cont0 = b + a*ARS_x
 y_calc = ARS_y/cont0
 y_calc[16] = np.nan
+y_calc = 1 - ARS_y/cont0
+obs_spec = np.nansum(y_calc[band])
 
 ARS1 = np.loadtxt(
     '/Users/nyonn/Desktop/SP13_TA3_TB2_SZA3_EA4_PA1_Dust1_WaterI1_SurfaceA4_rad.dat')
@@ -417,9 +421,106 @@ c, d = np.polyfit(POLY_x1, POLY_y1, 1)
 cont01 = d + c*ARS_x1
 y_calc1 = ARS_y1/cont01
 y_calc1[16] = np.nan
+y_calc1 = 1 - ARS_y1/cont01
+obs_spec1 = np.nansum(y_calc1[band])
 
 ax.scatter(ARS_x, y_calc, label="retrival result", s=8)
 ax.scatter(ARS_x, y_calc1, label="Forget result", s=8)
 ax.scatter(wvl, OMEGA_calc[0, :], label="OMEGA raw data", s=13)
 h1, l1 = ax.get_legend_handles_labels()
 ax.legend(h1, l1, loc='lower right', fontsize=5)
+
+print("OMEGA raw data：", spec)
+print("Retrieval Result：", obs_spec)
+print("Forget Result：", obs_spec1)
+print("Forget - Retrieval：", abs(obs_spec1 - obs_spec))
+print("Forget - OMEGA：", abs(obs_spec1 - spec))
+print("Retrieval - OMEGA：", abs(obs_spec - spec))
+
+# %%
+# 上のprogramのupdate
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname = '/Users/nyonn/IDLWorkspace/Default/savfile/ORB0363_3.sav'
+sav_data = readsav(sav_fname)
+
+wvl = sav_data['wvl']
+CO2 = np.where((wvl > 1.81) & (wvl < 2.19))
+wvl = wvl[CO2]
+
+band = np.where((wvl > 1.93) & (wvl < 2.04))
+
+jdat = sav_data['jdat']
+
+xind = 62
+yind = 594
+
+flux = jdat[yind, CO2, xind]
+flux[flux <= 0.01] = np.nan
+flux[flux >= 100] = np.nan
+
+x = [wvl[0], wvl[1], wvl[2], wvl[23], wvl[24], wvl[25]]
+y = [flux[:, 0], flux[:, 1], flux[:, 2],
+     flux[:, 23], flux[:, 24], flux[:, 25]]
+c, d = np.polyfit(x, y, 1)
+cont = d + c*wvl
+
+OMEGA_calc = flux/cont
+OMEGA_calc = OMEGA_calc[0, :]
+OMEGA_calc_rate = 1 - OMEGA_calc
+spec = np.nansum(OMEGA_calc_rate[band])
+
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(111, title='CO2 absorption')
+ax.grid(c='lightgray', zorder=1)
+ax.set_xlabel('Wavenumber [μm]', fontsize=10)
+
+ARS = np.loadtxt(
+    '/Users/nyonn/Desktop//pythoncode/ARS_calc/SP14_TA3_TB2_SZA2_EA1_PA1_Dust1_WaterI1_SurfaceA4_rad.dat')
+ARS_x = ARS[:, 0]
+ARS_x = (1/ARS_x)*10000
+ARS_x = ARS_x[::-1]
+ARS_y = ARS[:, 1]
+ARS_y = ARS_y[::-1]
+
+POLY_x = [ARS_x[0], ARS_x[1], ARS_x[2], ARS_x[23], ARS_x[24], ARS_x[25]]
+POLY_y = [ARS_y[0], ARS_y[1], ARS_y[2], ARS_y[23], ARS_y[24], ARS_y[25]]
+a, b = np.polyfit(POLY_x, POLY_y, 1)
+
+cont0 = b + a*ARS_x
+y_calc = ARS_y/cont0
+y_calc[16] = np.nan
+y_calc = ARS_y/cont0
+y_calc_rate = 1 - y_calc
+obs_spec = np.nansum(y_calc_rate[band])
+
+ARS1 = np.loadtxt(
+    '/Users/nyonn/Desktop/pythoncode/ARS_calc/SP12_TA3_TB2_SZA2_EA1_PA1_Dust1_WaterI1_SurfaceA4_rad.dat')
+ARS_x1 = ARS1[:, 0]
+ARS_x1 = (1/ARS_x)*10000
+ARS_x1 = ARS_x1[::-1]
+ARS_y1 = ARS1[:, 1]
+ARS_y1 = ARS_y1[::-1]
+
+POLY_x1 = [ARS_x1[0], ARS_x1[1], ARS_x1[2], ARS_x1[23], ARS_x1[24], ARS_x1[25]]
+POLY_y1 = [ARS_y1[0], ARS_y1[1], ARS_y1[2], ARS_y1[23], ARS_y1[24], ARS_y1[25]]
+c, d = np.polyfit(POLY_x1, POLY_y1, 1)
+
+cont01 = d + c*ARS_x1
+y_calc1 = ARS_y1/cont01
+y_calc1[16] = np.nan
+y_calc1 = ARS_y1/cont01
+y_calc_rate1 = 1 - y_calc1
+obs_spec1 = np.nansum(y_calc_rate1[band])
+
+ax.plot(ARS_x, y_calc, label="retrival result")
+ax.plot(ARS_x, y_calc1, label="Forget result")
+ax.scatter(wvl, OMEGA_calc, label="OMEGA raw data", s=13)
+h1, l1 = ax.get_legend_handles_labels()
+ax.legend(h1, l1, loc='lower right', fontsize=5)
+
+print("OMEGA raw data：", spec)
+print("Retrieval Result：", obs_spec)
+print("Forget Result：", obs_spec1)
+print("Forget - Retrieval：", abs(obs_spec1 - obs_spec))
+print("Forget - OMEGA：", abs(obs_spec1 - spec))
+print("Retrieval - OMEGA：", abs(obs_spec - spec))

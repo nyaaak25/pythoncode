@@ -124,7 +124,6 @@ width = 1 - (radiance/cont)
 band = np.where((wvl >= 1.94) & (wvl <= 1.99))
 obs_spec = np.nansum(width[band])
 
-
 fig = plt.figure(dpi=200)
 ax = fig.add_subplot(111, title='CO2 absorption')
 ax.grid(c='lightgray', zorder=1)
