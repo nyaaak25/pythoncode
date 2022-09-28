@@ -524,3 +524,105 @@ print("Forget Result：", obs_spec1)
 print("Forget - Retrieval：", abs(obs_spec1 - obs_spec))
 print("Forget - OMEGA：", abs(obs_spec1 - spec))
 print("Retrieval - OMEGA：", abs(obs_spec - spec))
+
+# %%
+# 可視化マップ作成のためのプログラム
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname = '/Users/nyonn/IDLWorkspace/Default/savfile/Table_SP_calc_ver4_add_albedo.sav'
+sav_data = readsav(sav_fname)
+
+pressure1 = sav_data['table_equivalent_pressure1']
+pressure2 = sav_data['table_equivalent_pressure2']
+pressure3 = sav_data['table_equivalent_pressure3']
+pressure4 = sav_data['table_equivalent_pressure4']
+pressure5 = sav_data['table_equivalent_pressure5']
+pressure6 = sav_data['table_equivalent_pressure6']
+pressure7 = sav_data['table_equivalent_pressure7']
+pressure8 = sav_data['table_equivalent_pressure8']
+pressure9 = sav_data['table_equivalent_pressure9']
+pressure10 = sav_data['table_equivalent_pressure10']
+pressure11 = sav_data['table_equivalent_pressure11']
+pressure12 = sav_data['table_equivalent_pressure12']
+pressure13 = sav_data['table_equivalent_pressure13']
+pressure14 = sav_data['table_equivalent_pressure14']
+pressure15 = sav_data['table_equivalent_pressure15']
+
+pressure1 = pressure1[1, 0, :, 0, 0, 0, 0, 1]
+pressure2 = pressure2[1, 0, :, 0, 0, 0, 0, 1]
+pressure3 = pressure3[1, 0, :, 0, 0, 0, 0, 1]
+pressure4 = pressure4[1, 0, :, 0, 0, 0, 0, 1]
+pressure5 = pressure5[1, 0, :, 0, 0, 0, 0, 1]
+pressure6 = pressure6[1, 0, :, 0, 0, 0, 0, 1]
+pressure7 = pressure7[1, 0, :, 0, 0, 0, 0, 1]
+pressure8 = pressure8[1, 0, :, 0, 0, 0, 0, 1]
+pressure9 = pressure9[1, 0, :, 0, 0, 0, 0, 1]
+pressure10 = pressure10[1, 0, :, 0, 0, 0, 0, 1]
+pressure11 = pressure11[1, 0, :, 0, 0, 0, 0, 1]
+pressure12 = pressure12[1, 0, :, 0, 0, 0, 0, 1]
+pressure13 = pressure13[1, 0, :, 0, 0, 0, 0, 1]
+pressure14 = pressure14[1, 0, :, 0, 0, 0, 0, 1]
+pressure15 = pressure15[1, 0, :, 0, 0, 0, 0, 1]
+
+Pa_list = [50, 150, 180, 215, 257, 308, 369,
+           442, 529, 633, 758, 907, 1096, 1300, 1500]
+
+Pa = np.repeat(Pa_list, 6)
+Dust = [0, 0.3, 0.6, 0.9, 1.2, 1.5]*15
+
+Pa_array = [pressure1, pressure2, pressure3, pressure4, pressure5, pressure6, pressure7,
+            pressure8, pressure9, pressure10, pressure11, pressure12, pressure13, pressure14, pressure15]
+pressure_array = np.ravel(Pa_array)
+
+Dust_pressure = np.array([Pa, Dust, pressure_array])
+
+fig = plt.figure(figsize=(2, 7), dpi=200)
+ax = fig.add_subplot(111, title='Dust - pressure')
+im = ax.scatter(Pa, Dust, c=pressure_array, s=30)
+fig.colorbar(im, orientation='horizontal')
+ax.set_xlabel('Pressure [Pa]')
+ax.set_ylabel('Dust Opacity')
+
+# %%
+# OMEGAのスペクトル
+
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname = '/Users/nyonn/IDLWorkspace/Default/savfile/ORB0931_3.sav'
+sav_data = readsav(sav_fname)
+
+specmars = np.loadtxt(
+    '/Users/nyonn/IDLWorkspace/Default/profile/specsol_0403.dat')
+dmars = sav_data['dmars']
+specmars = specmars/dmars/dmars
+
+jdat = sav_data['jdat']
+
+wvl = sav_data['wvl']
+wvl = wvl[0:127]
+specmars = specmars[0:127]
+
+# 0:127がSWIR
+# 128:255がLWIR
+# 256:352がVNIR
+
+nwvl = len(wvl)
+io = len(jdat[1, 1, :])
+ip = len(jdat[:, 1, 1])
+
+jdat = sav_data['jdat']
+flux = np.zeros((io, nwvl, ip))
+
+for i in range(io):
+    for o in range(ip):
+        flux[i, :, o] = jdat[o, 0:127, i]/specmars
+
+flux[flux <= 0.01] = np.nan
+flux[flux >= 100] = np.nan
+
+fig = plt.figure(figsize=(4, 2), dpi=200)
+ax = fig.add_subplot(111, title='OMEGA SWIR channel')
+ax.grid(c='lightgray', zorder=1)
+ax.set_xlabel('Wavenumber [μm]', fontsize=10)
+ax.set_ylabel('I/F', fontsize=10)
+ax.plot(wvl, flux[0, :, 10], label="OMEGA raw data", lw=1.5)
+h1, l1 = ax.get_legend_handles_labels()
+print(wvl)
