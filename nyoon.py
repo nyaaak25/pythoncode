@@ -626,3 +626,85 @@ ax.set_ylabel('I/F', fontsize=10)
 ax.plot(wvl, flux[0, :, 10], label="OMEGA raw data", lw=1.5)
 h1, l1 = ax.get_legend_handles_labels()
 print(wvl)
+
+# %%
+# ガウス-ニュートン法の実装まで python version
+# モジュールインポート
+
+# 前提条件の入力
+T = np.array([64.51, 66.14, 67.83, 69.58, 71.29, 73.16,
+             75.36, 77.9, 81.48, 84.01, 87.53, 92.39, 100.])
+P = np.array([101.325, 107.9911184, 115.283852, 123.2431974, 131.4691875, 140.9750724,
+             152.8807599, 167.6395461, 190.4243388, 208.0095592, 234.6607007, 276.0039671, 352.4910099])
+
+# Antoine式
+
+
+def theoreticalValue(beta):
+    Pcal = 10**(beta[0]+beta[1]/(T+beta[2]))
+    return Pcal
+
+# 残差
+
+
+def objectiveFunction(beta):
+    r = P - theoreticalValue(beta)
+    return r
+
+# Gauss-Newton法
+
+
+def gaussNewton(function, beta, tolerance, epsilon):
+    delta = 2*tolerance
+    alpha = 1
+    while np.linalg.norm(delta) > tolerance:
+        F = function(beta)
+        J = np.zeros((len(F), len(beta)))  # 有限差分ヤコビアン
+        for jj in range(0, len(beta)):
+            dBeta = np.zeros(beta.shape)
+            dBeta[jj] = epsilon
+            J[:, jj] = (function(beta+dBeta)-F)/epsilon
+        delta = -np.linalg.pinv(J).dot(F)
+        print("before:", delta)
+        abcde = -np.linalg.pinv(J)
+        efg = abcde.dot(F)
+        print("after:", efg)  # 探索方向
+        beta = beta + alpha*delta
+    return beta
+
+
+# Gauss-Newton法の実行
+#initialValue = np.array([1,1,1])
+#initialValue = np.array([10,-100,100])
+initialValue = np.array([10, -1500, 200])
+betaID = gaussNewton(objectiveFunction, initialValue, 1e-4, 1e-4)
+
+# グラフの出力
+# print(betaID)
+plt.figure()
+plt.plot(T, P, 'o')
+plt.plot(T, theoreticalValue(betaID), '-')
+plt.xlabel('T [℃]')
+plt.ylabel('P [kPa]')
+plt.legend(['Row data', 'Pcal'])
+plt.show()
+
+# %%
+# スペクトルを表示させる
+
+ARS = np.loadtxt(
+    '/Users/nyonn/Desktop/pythoncode/ARS_calc/SP15_TA3_TB2_SZA3_EA4_PA1_Dust1_WaterI1_SurfaceA4_rad.dat')
+ARS_x = ARS[:, 0]
+ARS_x = ARS_x[::-1]
+ARS_x = (1/ARS_x)*10000  # cm-1 → cm
+
+ARS_y = ARS[:, 1]
+ARS_y = ARS_y[::-1]
+ARS_y = (ARS_y/(ARS_x)**2)
+
+
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(111, title='CO2 absorption')
+ax.grid(c='lightgray', zorder=1)
+ax.set_xlabel('Wavenumber [μm]', fontsize=10)
+ax.plot(ARS_x, ARS_y, label="retrival result")
