@@ -52,10 +52,15 @@ y_total = np.sum(y_calc[6:17])
 fig = plt.figure(dpi=200)
 ax = fig.add_subplot(111, title='CO2 absorption')
 ax.grid(c='lightgray', zorder=1)
+ax.set_xlabel('Wavenumber [μm]', fontsize=10)
 ax.plot(ARS_x, ARS_y, color='blue', label="fitting", zorder=2)
 ax.plot(ARS_x, cont0, color='red', label="Observation", zorder=1)
-ax.axvline(x=ARS_x[9])
-ax.axvline(x=ARS_x[19])
+ax.axvline(x=ARS_x[3])
+ax.axvline(x=ARS_x[20])
+# 9:19が1.94~2.09μm
+# 9:13は1.94〜1.99μm
+# 3:20が1.85~2.10μm
+# 9:16が1.93~2.04μm
 
 # IDLで計算されたものとの整合性を取るテスト
 # %%
