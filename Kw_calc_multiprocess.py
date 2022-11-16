@@ -42,7 +42,11 @@ import os
 import multiprocessing
 
 # HITRAN dataを読み込み
-Hitrandata = np.loadtxt('4545-5556_hitrandata.txt')
+
+# hitran data update[2022.10.7]  同位体増
+# Hitrandata = np.loadtxt('4545-5556_hitrandata.txt')
+Hitrandata = np.loadtxt('4545-5556_CO2hitrandata.txt')
+v_ind = Hitrandata[:, 0]
 vij = Hitrandata[:, 0]
 Sij = Hitrandata[:, 1]
 gammaair = Hitrandata[:, 3]
@@ -50,6 +54,7 @@ gammaself = Hitrandata[:, 2]
 E = Hitrandata[:, 4]
 nair = Hitrandata[:, 5]
 deltaair = Hitrandata[:, 6]
+
 
 # CGS単位系
 # file open＆定数定義
@@ -85,7 +90,7 @@ path_list, name_list = filesearch('dir')
 
 # 波数幅: 1.8 cm-1から2.2m-1までは4545cm-1から5556cm-1
 # plotする範囲の波数
-dv = 1.0
+dv = 0.01
 cut = 120
 v_all = np.arange(4545, 5556, dv)
 
@@ -178,6 +183,8 @@ def K2_calc(xk, yk):
 
     # return (a3 + b3*xki**2 + c3*xki**4 + d3*xki**6) / (a4 + b4*xki**2 + c4*xki**4 + d4*xki**6 + xki**8)
     return ((a3 + b3*xk.T**2 + c3*xk.T**4 + d3*xk.T**6) / (a4 + b4*xk.T**2 + c4*xk.T**4 + d4*xk.T**6 + xk.T**8)).T
+
+# 要改善可能：ykの何乗を先に定義する (佐藤くんスクショ.png)
 
 
 @jit(nopython=True, fastmath=True)
@@ -441,7 +448,7 @@ def for_statememt(i):
         tausum0 = tausum[addv_m.size:tausum.size-addv_p.size]
         Kw0 = Kwsum[:, addv_m.size:tausum.size-addv_p.size]
         new_Kw = Kw0.T
-        if k % 100 == 0:  # ループにかかる時間を出力(5000回に1度)
+        if k % 5000 == 0:  # ループにかかる時間を出力(5000回に1度)
             print('1ループの所要時間: ', time.time()-start)
             print('今なんループ？', k)
 
@@ -455,9 +462,11 @@ def for_statememt(i):
 
 @ profile
 def main():
-    with multiprocessing.Pool(processes=3) as pool:
-        temp_press_list = list(pool.map(for_statememt, range(6)))
+    with multiprocessing.Pool(processes=30) as pool:
+        temp_press_list = list(pool.map(for_statememt, range(30)))
     temp_press_list = np.array(temp_press_list)
+
+# プロセス数は使用するコア数、rangeは何個計算を回すかを指定
 
 
 if __name__ == '__main__':
