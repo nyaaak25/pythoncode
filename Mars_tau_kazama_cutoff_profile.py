@@ -39,14 +39,17 @@ import glob
 import os
 
 # HITRAN dataを読み込み
-Hitrandata = np.loadtxt('4545-5556_hitrandata.txt')
-vij = Hitrandata[:, 0]
-Sij = Hitrandata[:, 1]
-gammaair = Hitrandata[:, 3]
-gammaself = Hitrandata[:, 2]
-E = Hitrandata[:, 4]
-nair = Hitrandata[:, 5]
-deltaair = Hitrandata[:, 6]
+# Hitrandata = np.loadtxt('4545-5556_hitrandata.txt')
+Hitrandata = np.loadtxt('Hitran_data_4500-5700.txt')
+v_ind = Hitrandata[:, 0]
+ind = np.where((4545 < v_ind) & (5556 > v_ind))
+vij = Hitrandata[ind, 0]
+Sij = Hitrandata[ind, 1]
+gammaair = Hitrandata[ind, 3]
+gammaself = Hitrandata[ind, 2]
+E = Hitrandata[ind, 4]
+nair = Hitrandata[ind, 5]
+deltaair = Hitrandata[ind, 6]
 
 # CGS単位系
 # file open＆定数定義
