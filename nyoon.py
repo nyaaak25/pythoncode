@@ -696,15 +696,207 @@ ARS = np.loadtxt(
     '/Users/nyonn/Desktop/pythoncode/ARS_calc/SP15_TA3_TB2_SZA3_EA4_PA1_Dust1_WaterI1_SurfaceA4_rad.dat')
 ARS_x = ARS[:, 0]
 ARS_x = ARS_x[::-1]
-ARS_x = (1/ARS_x)*10000  # cm-1 → cm
+ARS_x = (1/ARS_x)  # cm-1 → cm
+ARSx = ARS_x*1e4
 
 ARS_y = ARS[:, 1]
 ARS_y = ARS_y[::-1]
-ARS_y = (ARS_y/(ARS_x)**2)
+ARS_y = (ARS_y/(ARS_x)**2)*1e-7
 
 
 fig = plt.figure(dpi=200)
-ax = fig.add_subplot(111, title='CO2 absorption')
+ax = fig.add_subplot(111, title='ARS Calc Spectrum')
 ax.grid(c='lightgray', zorder=1)
 ax.set_xlabel('Wavenumber [μm]', fontsize=10)
-ax.plot(ARS_x, ARS_y, label="retrival result")
+ax.set_ylabel('Radiance', fontsize=10)
+ax.plot(ARSx, ARS_y, label="retrival result")
+# ax.axvline(x=ARS_x[9])
+# ax.axvline(x=ARS_x[15])
+print(ARS_x)
+
+# %%
+# EW法のband幅を表示させる用
+ARS = np.loadtxt(
+    '/Users/nyonn/Desktop/SP6_TA1_TB1_SZA1_EA1_PA1_Dust5_WaterI2_SurfaceA7_rad.dat')
+ARS_x = ARS[:, 0]
+ARS_x = ARS_x[::-1]
+ARS_x = (1/ARS_x)  # cm-1 → cm
+ARSx = ARS_x*1e4
+
+ARS_y = ARS[:, 1]
+ARS_y = ARS_y[::-1]
+ARS_y = (ARS_y/(ARS_x)**2)*1e-7
+
+ARS_y[8] = np.nan
+ARS_y[17] = np.nan
+ARS_y[24] = np.nan
+ARS_y[27] = np.nan
+
+POLY_x = [ARSx[0], ARSx[1], ARSx[2], ARSx[23], ARSx[25], ARSx[26]]
+POLY_y = [ARS_y[0], ARS_y[1], ARS_y[2], ARS_y[23], ARS_y[25], ARS_y[26]]
+a, b = np.polyfit(POLY_x, POLY_y, 1)
+
+cont0 = b + a*ARSx
+y_calc = ARS_y/cont0
+
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(111, title='Using spectrum')
+ax.grid(c='lightgray', zorder=1)
+ax.set_xlabel('Wavelength [μm]', fontsize=10)
+ax.set_ylabel('Radiance', fontsize=10)
+ax.scatter(ARSx, ARS_y, label="retrival result")
+ax.scatter(POLY_x, POLY_y, label="retrival result", color='red')
+ax.plot(ARSx, ARS_y, label="OMEGA raw data", lw=1.5, color='blue')
+ax.plot(ARSx, cont0, label="OMEGA raw data", lw=1.5, color='red')
+
+# 1.85-2.10um[band1]
+ax.axvline(x=ARSx[4], color="green")
+ax.axvline(x=ARSx[21], color="green")
+
+# 1.94~2.09um [band2]
+ax.axvline(x=ARSx[10], color="green")
+ax.axvline(x=ARSx[20], color="green")
+
+# 1.94~1.99um [band3]
+ax.axvline(x=ARSx[10], color="green")
+ax.axvline(x=ARSx[13], color="green")
+
+# 1.94-2.04um [band4]
+ax.axvline(x=ARSx[10], color="green")
+ax.axvline(x=ARSx[17], color="green")
+
+# %%
+# 使用している波長をみてる
+
+ARS = np.loadtxt(
+    '/Users/nyonn/Desktop/pythoncode/SP5_TA1_TB1_SZA1_EA1_PA1_Dust5_WaterI2_SurfaceA7_rad.dat')
+ARS_x = ARS[:, 0]
+ARS_x = ARS_x[::-1]
+ARS_x = (1/ARS_x)  # cm-1 → cm
+ARSx = ARS_x*1e4
+
+ARS_y = ARS[:, 1]
+ARS_y = ARS_y[::-1]
+ARS_y = (ARS_y/(ARS_x)**2)*1e-7
+
+
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(111, title='ARS Calc Spectrum')
+ax.grid(c='lightgray', zorder=1)
+ax.set_xlabel('Wavenumber [μm]', fontsize=10)
+ax.set_ylabel('Radiance', fontsize=10)
+ax.plot(ARSx, ARS_y, label="retrival result")
+
+# not use spectrum
+ax.axvline(x=ARSx[8], color="red")
+ax.axvline(x=ARSx[17], color="red")
+ax.axvline(x=ARSx[24], color="red")
+ax.axvline(x=ARSx[27], color="red")
+
+ARSx[8] = np.nan
+ARSx[17] = np.nan
+ARSx[24] = np.nan
+ARSx[27] = np.nan
+
+# continuumを引く場所
+ax.axvline(x=ARSx[0], color="green")
+ax.axvline(x=ARSx[1], color="green")
+ax.axvline(x=ARSx[2], color="green")
+ax.axvline(x=ARSx[23], color="green")
+ax.axvline(x=ARSx[25], color="green")
+ax.axvline(x=ARSx[26], color="green")
+
+print(ARSx[8], ARSx[17], ARSx[24], ARSx[27])
+
+# %%
+# 観測も一緒に表示
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname = '/Users/nyonn/IDLWorkspace/Default/savfile/ORB0931_3.sav'
+sav_data = readsav(sav_fname)
+
+wvl = sav_data['wvl']
+CO2 = np.where((wvl > 1.8) & (wvl < 2.2))
+wvl = wvl[CO2]
+
+jdat = sav_data['jdat']
+
+flux = jdat[0, CO2, 0]
+aaa = flux[0, :]
+aaa[8] = np.nan
+aaa[17] = np.nan
+aaa[24] = np.nan
+aaa[27] = np.nan
+
+
+ARS = np.loadtxt(
+    '/Users/nyonn/Desktop/SP6_TA1_TB1_SZA1_EA1_PA1_Dust5_WaterI2_SurfaceA7_rad.dat')
+ARS_x = ARS[:, 0]
+ARS_x = ARS_x[::-1]
+ARS_x = (1/ARS_x)  # cm-1 → cm
+ARSx = ARS_x*1e4
+
+ARS_y = ARS[:, 1]
+ARS_y = ARS_y[::-1]
+ARS_y = (ARS_y/(ARS_x)**2)*1e-7
+
+ARS_y[8] = np.nan
+ARS_y[17] = np.nan
+ARS_y[24] = np.nan
+ARS_y[27] = np.nan
+
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(111, title='ARS Calc Spectrum')
+ax.grid(c='lightgray', zorder=1)
+ax.set_xlabel('Wavenumber [μm]', fontsize=10)
+ax.set_ylabel('Radiance', fontsize=10)
+ax.plot(ARSx, ARS_y, label="retrival result")
+ax.plot(wvl, aaa, label="OMEGA raw data", lw=1.5, color='red')
+
+# ax.axvline(x=ARSx[8],color="red")
+# ax.axvline(x=ARSx[17],color="red")
+# ax.axvline(x=ARSx[24],color="red")
+# ax.axvline(x=ARSx[27],color="red")
+
+ax.axvline(x=ARSx[0], color="green")
+ax.axvline(x=ARSx[1], color="green")
+ax.axvline(x=ARSx[2], color="green")
+ax.axvline(x=ARSx[23], color="green")
+ax.axvline(x=ARSx[25], color="green")
+ax.axvline(x=ARSx[26], color="green")
+
+print(ARSx[8], ARSx[17], ARSx[24], ARSx[27])
+
+# %%
+# 351のORBでの気圧変動を確認
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname = '/Users/nyonn/Desktop/pythoncode/work file/work_CO2_ORB0351_3.sav'
+sav_data = readsav(sav_fname)
+print(sav_data.keys())
+
+lati = sav_data['lati']
+longi = sav_data['longi']
+#ind = np.where((lati > 18) & (lati < 27) & (longi > 200) & (longi < 205))
+
+# ORB0030_1
+# ind = np.where((lati > -50) & (lati < -47) & (longi > 60) & (longi < 62)
+# ORB0920_3
+# ind = np.where((lati > 50) & (lati < 61) & (longi > 271) & (longi < 278))
+# ORB0931_3
+# ind = np.where((lati > 50) & (lati < 61) & (longi > 272) & (longi < 277))
+# ORB0313_4
+# ind = np.where((lati > 36) & (lati < 41) & (longi > 95) & (longi < 98))
+
+#lati = lati[ind]
+#longi = longi[ind]
+
+pressure3 = sav_data['pressure']
+pressure3 = np.exp(pressure3)
+
+pressure3[pressure3 <= 0] = np.nan
+#pressure3 = pressure3[ind]
+
+fig = plt.figure(figsize=(2, 5), dpi=200)
+ax = fig.add_subplot(111, title='ORB0313_4')
+# cmapを指定することでカラーマップの様子を変更することができる
+im = ax.scatter(longi, lati, c=pressure3, s=2, cmap='jet')
+fig.colorbar(im, orientation='horizontal')
