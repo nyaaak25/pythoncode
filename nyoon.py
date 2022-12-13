@@ -897,6 +897,115 @@ pressure3[pressure3 <= 0] = np.nan
 
 fig = plt.figure(figsize=(2, 5), dpi=200)
 ax = fig.add_subplot(111, title='ORB0313_4')
-# cmapを指定することでカラーマップの様子を変更することができる
+# cmapを指定することでカラーマップの様子を変更するnpことができる
 im = ax.scatter(longi, lati, c=pressure3, s=2, cmap='jet')
 fig.colorbar(im, orientation='horizontal')
+
+# %%
+# dustの図を作成
+# ダストとアルベドの評価図を作成
+tau = [0.04, 0.14, 0.24, 0.34, 0.44]
+A_15 = [-149.585, -75.1, 0, 74.619, 138.569]
+A_20 = [-116.32, -57.554, 0, 60.816, 121.276]
+A_25 = [-93.965, -47.304, 0, 50.443, 102.065]
+A_29 = [-81.146, -41.302, 0, 44.177, 90.215]
+A_33 = [-72.376, -38.045, 0, 37.042, 78.215]
+
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(
+    111, title='Influence of the dust opacity unsertainties on the pressure retrieval')
+ax.grid(c='lightgray', zorder=1)
+ax.set_xlabel('Assumed dust opacity', fontsize=10)
+ax.set_ylabel('Surface pressure deviation (Pa)', fontsize=10)
+ax.plot(tau, A_15, linestyle="dotted", label="A=0.15", color="black")
+ax.plot(tau, A_20, linestyle="dashdot", label="A=0.20", color="black")
+ax.plot(tau, A_25, linestyle="dashed", label="A=0.25", color="black")
+ax.plot(tau, A_29, linestyle=(0, (1, 1)), label="A=0.29", color="black")
+ax.plot(tau, A_33, label="A=0.33", color="black")
+
+h1, l1 = ax.get_legend_handles_labels()
+ax.legend(h1, l1, loc='lower right', fontsize=10)
+
+# %%
+# pressure fileをカラー表示させる
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname1 = '/Users/nyonn/Desktop/pythoncode/pressuremap_ORB0931_1.sav'
+sav_data1 = readsav(sav_fname1)
+
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname2 = '/Users/nyonn/Desktop/pythoncode/pressuremap_ORB0920_3.sav'
+sav_data2 = readsav(sav_fname2)
+
+lati1 = sav_data1['lati']
+longi1 = sav_data1['longi']
+pressure1_b = sav_data1['pressure']
+
+lati2 = sav_data2['lati']
+longi2 = sav_data2['longi']
+pressure2_b = sav_data2['pressure']
+
+pressure1 = np.zeros((596, 128))
+pressure1 = pressure1_b + 0
+
+pressure2 = np.zeros((596, 128))
+pressure2 = pressure2_b + 0
+
+ind = np.where(pressure1 == 0)
+pressure1[ind] = np.nan
+
+ind = np.where(pressure2 == 0)
+pressure2[ind] = np.nan
+
+fig = plt.figure(figsize=(2, 5), dpi=200)
+ax = fig.add_subplot(111, title='ORB0920_3')
+# cmapを指定することでカラーマップの様子を変更することができる
+im = ax.scatter(longi2, lati2, c=pressure2, s=2, cmap='plasma')
+fig.colorbar(im, orientation='horizontal')
+
+# %%
+# TBD
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname1 = '/Users/nyonn/Desktop/pythoncode/pressuremap_ORB0931_1.sav'
+sav_data1 = readsav(sav_fname1)
+
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname2 = '/Users/nyonn/Desktop/pythoncode/pressuremap_ORB0920_3.sav'
+sav_data2 = readsav(sav_fname2)
+
+lati1 = sav_data1['lati']
+longi1 = sav_data1['longi']
+pressure1_b = sav_data1['pressure']
+
+lati2 = sav_data2['lati']
+longi2 = sav_data2['longi']
+pressure2_b = sav_data2['pressure']
+
+pressure1 = np.zeros((596, 128))
+pressure1 = pressure1_b + 0
+
+pressure2 = np.zeros((596, 128))
+pressure2 = pressure2_b + 0
+
+ind1 = np.where((lati1 > 54) & (lati1 < 56) & (longi1 > 274) & (longi1 < 277))
+ind2 = np.where((lati2 > 54) & (lati2 < 56) & (longi2 > 274) & (longi2 < 277))
+
+pressure_1 = pressure1[ind1]
+pressure_2 = pressure2[ind2]
+
+longi_1 = longi1[ind1]
+lati_1 = lati1[ind1]
+
+pressure_dif = pressure_1[0:3520] - pressure_2[0:3520]
+#pressure_dif[pressure_dif <= -100] = np.nan
+#pressure_dif[pressure_dif >= 100] = np.nan
+
+longi_dif = longi_1[0:3520]
+lati_dif = lati_1[0:3520]
+
+fig = plt.figure(figsize=(2, 5), dpi=200)
+ax = fig.add_subplot(111, title='Pressure diffrence')
+# cmapを指定することでカラーマップの様子を変更することができる
+im = ax.scatter(longi_dif, lati_dif, c=pressure_dif, s=2, cmap='jet')
+fig.colorbar(im, orientation='horizontal')
+
+# %%
