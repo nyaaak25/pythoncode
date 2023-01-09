@@ -1009,3 +1009,102 @@ im = ax.scatter(longi_dif, lati_dif, c=pressure_dif, s=2, cmap='jet')
 fig.colorbar(im, orientation='horizontal')
 
 # %%
+# multi and single scattering
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(
+    111, title='Difference between Multi-scattering and Single-scattering')
+ax.grid(c='lightgray', zorder=1)
+ax.set_xlabel('Wavelength [μm]', fontsize=10)
+ax.set_ylabel('Radiance', fontsize=10)
+
+ARS = np.loadtxt(
+    '/Users/nyonn/Desktop/pythoncode/ARS_calc/SP11_TA1_TB1_SZA1_EA1_PA1_Dust2_WaterI2_SurfaceA1_rad_test.dat')
+ARS_x = ARS[:, 0]
+ARS_x = (1/ARS_x)*10000
+ARS_x = ARS_x[::-1]
+ARS_y = ARS[:, 1]
+ARS_y = ARS_y[::-1]
+
+POLY_x = [ARS_x[0], ARS_x[1], ARS_x[2], ARS_x[23], ARS_x[24], ARS_x[25]]
+POLY_y = [ARS_y[0], ARS_y[1], ARS_y[2], ARS_y[23], ARS_y[24], ARS_y[25]]
+a, b = np.polyfit(POLY_x, POLY_y, 1)
+
+cont0 = b + a*ARS_x
+y_calc = ARS_y/cont0
+y_calc[16] = np.nan
+y_calc = ARS_y/cont0
+y_calc_rate = 1 - y_calc
+
+
+ARS1 = np.loadtxt(
+    '/Users/nyonn/Desktop/pythoncode/ARS_calc/SP11_TA1_TB1_SZA1_EA1_PA1_Dust1_WaterI2_SurfaceA1_rad_d0.dat')
+ARS_x1 = ARS1[:, 0]
+ARS_x1 = (1/ARS_x)*10000
+ARS_x1 = ARS_x1[::-1]
+ARS_y1 = ARS1[:, 1]
+ARS_y1 = ARS_y1[::-1]
+
+POLY_x1 = [ARS_x1[0], ARS_x1[1], ARS_x1[2], ARS_x1[23], ARS_x1[24], ARS_x1[25]]
+POLY_y1 = [ARS_y1[0], ARS_y1[1], ARS_y1[2], ARS_y1[23], ARS_y1[24], ARS_y1[25]]
+c, d = np.polyfit(POLY_x1, POLY_y1, 1)
+
+cont01 = d + c*ARS_x1
+y_calc1 = ARS_y1/cont01
+y_calc1[16] = np.nan
+y_calc1 = ARS_y1/cont01
+y_calc_rate1 = 1 - y_calc1
+
+
+ax.plot(ARS_x, y_calc, label="d=0.3", color="red")
+ax.plot(ARS_x, y_calc1, label="d=0", color="blue")
+h1, l1 = ax.get_legend_handles_labels()
+ax.legend(h1, l1, loc='lower right', fontsize=7)
+
+# %%
+# 高度補正
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname1 = '/Users/nyonn/Desktop/pythoncode/SPmap_ORB0313_4.sav'
+sav_data1 = readsav(sav_fname1)
+
+lati1 = sav_data1['lati']
+longi1 = sav_data1['longi']
+pressure = sav_data1['pressure']
+tamap = sav_data1['tamap']
+
+ip = len(lati1[:, 0])
+io = len(lati1[0, :])
+
+pressure1 = np.zeros((ip, io))
+pressure1 = pressure + 0
+pressure1[pressure1 == 0] = np.nan
+
+tamap1 = np.zeros((ip, io))
+tamap1 = tamap + 0
+tamap1[tamap1 == 0] = np.nan
+
+# 高度補正を行う
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname2 = '/Users/nyonn/Desktop/pythoncode/ORB0313_4.sav'
+sav_data2 = readsav(sav_fname2)
+
+alt1 = sav_data2['alt']
+R = 192
+g = 3.72
+Gconst = 6.67430e-11
+MMars = 6.42e23
+RMars = 3.4e6
+# g = -Gconst*MMars/(-RMars*RMars)
+
+# pre_sev = pressure1 * np.exp((alt1*1e3)/((R*tamap1)/g))
+pre_sev = pressure1 * \
+    np.exp((alt1*1e3)/((R*tamap1)/(-Gconst * MMars /
+           (-1*(RMars+alt1*1e3)*(RMars+alt1*1e3)))))
+
+
+fig = plt.figure(figsize=(2, 5), dpi=200)
+ax = fig.add_subplot(111, title='SP map orb0313_4')
+ax.set_ylim(36.7, 41)
+# cmapを指定することでカラーマップの様子を変更することができる
+im = ax.scatter(longi1, lati1, c=pre_sev, s=2,
+                cmap='jet', vmin=618, vmax=640)
+fig.colorbar(im, orientation='horizontal')
