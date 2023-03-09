@@ -1062,49 +1062,53 @@ ax.legend(h1, l1, loc='lower right', fontsize=7)
 
 # %%
 # 高度補正
-data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
-sav_fname1 = '/Users/nyonn/Desktop/pythoncode/SPmap_ORB0313_4.sav'
-sav_data1 = readsav(sav_fname1)
 
-lati1 = sav_data1['lati']
-longi1 = sav_data1['longi']
-pressure = sav_data1['pressure']
-tamap = sav_data1['tamap']
+# %%
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(111, title='Deffernce due to cut off')
+ax.grid(c='lightgray', zorder=1)
+ax.set_xlabel('Wavenumber [cm-1]', fontsize=10)
+ax.set_ylabel('defference [%]', fontsize=10)
+ax.set_xlim(4800,5100)
+ax.set_ylim(0,10)
 
-ip = len(lati1[:, 0])
-io = len(lati1[0, :])
+nocutoff = np.loadtxt('/Users/nyonn/Desktop/pythoncode/not use file/4445-5656_0.01step.txt')
+wav = nocutoff[:,0]
+ind  = np.where((wav >= 4545) & (wav < 5556))
+wav = wav[ind]
+no = nocutoff[:,1]
+no = no[ind]
+#no = np.exp(no)
 
-pressure1 = np.zeros((ip, io))
-pressure1 = pressure + 0
-pressure1[pressure1 == 0] = np.nan
+cutoff50 = np.loadtxt('/Users/nyonn/Desktop/pythoncode/not use file/4545-5556_0.01step_cutoff_50.txt')
+wav50 = cutoff50[:,0]
+ind50  = np.where((wav50 >= 4545) & (wav50 < 5556))
+c50 = cutoff50[:,1]
+c50 = c50[ind50]
+c50 = np.exp(c50)
 
-tamap1 = np.zeros((ip, io))
-tamap1 = tamap + 0
-tamap1[tamap1 == 0] = np.nan
+cutoff80 = np.loadtxt('/Users/nyonn/Desktop/pythoncode/not use file/4545-5556_0.01step_cutoff_80.txt')
+wav80 = cutoff80[:,0]
+ind80  = np.where((wav80 >= 4545) & (wav80 < 5556))
+c80 = cutoff80[:,1]
+c80 = c80[ind80]
+c80 = np.exp(c80)
 
-# 高度補正を行う
-data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
-sav_fname2 = '/Users/nyonn/Desktop/pythoncode/ORB0313_4.sav'
-sav_data2 = readsav(sav_fname2)
+cutoff120 = np.loadtxt('/Users/nyonn/Desktop/pythoncode/not use file/4545-5556_0.01step_cutoff_120.txt')
+wav120 = cutoff120[:,0]
+ind120  = np.where((wav120 >= 4545) & (wav120 < 5556))
+c120 = cutoff120[:,1]
+c120 = c120[ind120]
+#c120 = np.exp(c120)
 
-alt1 = sav_data2['alt']
-R = 192
-g = 3.72
-Gconst = 6.67430e-11
-MMars = 6.42e23
-RMars = 3.4e6
-# g = -Gconst*MMars/(-RMars*RMars)
+#差を取る
+dif50 = (no-c50)*100/no
+dif80 = (no-c80)*100/no
+dif120 = (no-c120)*100/no
 
-# pre_sev = pressure1 * np.exp((alt1*1e3)/((R*tamap1)/g))
-pre_sev = pressure1 * \
-    np.exp((alt1*1e3)/((R*tamap1)/(-Gconst * MMars /
-           (-1*(RMars+alt1*1e3)*(RMars+alt1*1e3)))))
-
-
-fig = plt.figure(figsize=(2, 5), dpi=200)
-ax = fig.add_subplot(111, title='SP map orb0313_4')
-ax.set_ylim(36.7, 41)
-# cmapを指定することでカラーマップの様子を変更することができる
-im = ax.scatter(longi1, lati1, c=pre_sev, s=2,
-                cmap='jet', vmin=618, vmax=640)
-fig.colorbar(im, orientation='horizontal')
+#ax.plot(wav, no, label="no cutoff",zorder=4)
+#ax.plot(wav, dif50, label="cutoff 50",zorder=1)
+#ax.plot(wav, dif80, label="cutoff 80",zorder=2)
+ax.plot(wav, dif120, label="cutoff 120",zorder=3)
+h1, l1 = ax.get_legend_handles_labels()
+ax.legend(h1, l1, loc='lower right', fontsize=7)
