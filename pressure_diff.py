@@ -305,7 +305,7 @@ h1, l1 = ax3.get_legend_handles_labels()
 # %%
 # 高度補正
 data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
-sav_fname1 = '/Users/nyonn/Desktop/pythoncode/SPmap_ORB0313_4.sav'
+sav_fname1 = '/Users/nyonn/Desktop/pythoncode/SPmap_ORB0308_3.sav'
 sav_data1 = readsav(sav_fname1)
 
 lati1 = sav_data1['lati']
@@ -331,7 +331,133 @@ MOLA1[MOLA1 == 0] = np.nan
 
 # 高度補正を行う
 data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
-sav_fname2 = '/Users/nyonn/Desktop/pythoncode/ORB0313_4.sav'
+sav_fname2 = '/Users/nyonn/Desktop/pythoncode/ORB0308_3.sav'
+sav_data2 = readsav(sav_fname2)
+
+alt1 = sav_data2['alt']
+R = 192
+g = 3.72
+Gconst = 6.67430e-11
+MMars = 6.42e23
+RMars = 3.4e6
+# g = -Gconst*MMars/(-RMars*RMars)
+
+# pre_sev = pressure1 * np.exp((alt1*1e3)/((R*tamap1)/g))
+# pre_sev = pressure1 * \
+#    np.exp((alt1*1e3)/((R*tamap1)/(-Gconst * MMars /
+#           (-1*(RMars+alt1*1e3)*(RMars+alt1*1e3)))))
+pre_sev = pressure1 * \
+    np.exp((MOLA1)/((R*tamap1)/(-Gconst * MMars /
+           (-1*(RMars+MOLA1)*(RMars+MOLA1)))))
+
+
+fig = plt.figure(figsize=(2, 5), dpi=200)
+ax = fig.add_subplot(111, title='SP map orb0313_4')
+#ax.set_ylim(36.7, 41)
+# cmapを指定することでカラーマップの様子を変更することができる
+im = ax.scatter(longi1, lati1, c=pre_sev, s=2,
+                cmap='jet')
+fig.colorbar(im, orientation='horizontal')
+
+# %%
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname1 = '/Users/nyonn/Desktop/pythoncode/sav file/SPmap_ORB0931_3_B4.sav'
+sav_data1 = readsav(sav_fname1)
+print(sav_data1.keys())
+
+lati = sav_data1['lati']
+longi = sav_data1['longi']
+albedo = sav_data1['albedomap']
+dust = sav_data1['dustmap']
+ta = sav_data1['pressure']
+
+ip = len(lati[:, 0])
+io = len(lati[0, :])
+
+albedo1 = np.zeros((ip, io))
+albedo1 = albedo + 0
+albedo1[albedo1 == 0] = np.nan
+
+dust1 = np.zeros((ip, io))
+dust1 = dust + 0
+dust1[dust1 == 0] = np.nan
+
+altitude1 = np.zeros((ip, io))
+altitude1 = altitude + 0
+altitude1[altitude1 == 0] = np.nan
+
+ta1 = np.zeros((ip, io))
+ta1 = ta + 0
+ta1[ta1 == 0] = np.nan
+
+SP1 = np.zeros((ip, io))
+SP1 = SP + 0
+SP1[SP1 == 0] = np.nan
+
+fig = plt.figure(figsize=(12, 7), dpi=400)
+fig.suptitle("ORB0931_3 RegionⅠ", fontsize=20)
+ax1 = fig.add_subplot(131, title='Dust Opacity')
+ax2 = fig.add_subplot(132, title='Surface temperature')
+ax3 = fig.add_subplot(133, title='Retreival Surface Albedo')
+
+im1 = ax1.scatter(longi, lati, c=dust1, s=5,
+                  cmap='jet', vmin=0.079, vmax=0.086)
+fig.colorbar(im1, ax=ax1, pad=0.08, shrink=0.9,
+             aspect=50, orientation='horizontal')
+
+im2 = ax2.scatter(longi, lati, c=ta1, s=5, cmap='jet')
+fig.colorbar(im2, ax=ax2, pad=0.08, shrink=0.9,
+             aspect=50, orientation='horizontal', label='(K)')
+
+im3 = ax3.scatter(longi, lati, c=MOLA1, s=5,
+                  cmap='jet', vmin=0.18, vmax=0.23)
+fig.colorbar(im3, ax=ax3, pad=0.08, shrink=0.9,
+             aspect=50, orientation='horizontal')
+
+# %%
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname1 = '/Users/nyonn/Desktop/pythoncode/SPmap_ORB6437_4.sav'
+sav_data1 = readsav(sav_fname1)
+print(sav_data1.keys())
+
+lati = sav_data1['lati']
+longi = sav_data1['longi']
+albedo = sav_data1['albedomap']
+altitude = sav_data1['altitude']
+dust = sav_data1['dustmap']
+ta = sav_data1['tamap']
+SP = sav_data1['mcdpressure']
+pressure = sav_data1['pressure']
+
+ip = len(lati[:, 0])
+io = len(lati[0, :])
+
+albedo1 = np.zeros((ip, io))
+albedo1 = albedo + 0
+albedo1[albedo1 == 0] = np.nan
+
+dust1 = np.zeros((ip, io))
+dust1 = dust + 0
+dust1[dust1 == 0] = np.nan
+
+altitude1 = np.zeros((ip, io))
+altitude1 = altitude + 0
+altitude1[altitude1 == 0] = np.nan
+
+ta1 = np.zeros((ip, io))
+ta1 = ta + 0
+ta1[ta1 == 0] = np.nan
+
+SP1 = np.zeros((ip, io))
+SP1 = SP + 0
+SP1[SP1 == 0] = np.nan
+
+pressure1 = np.zeros((ip, io))
+pressure1 = pressure + 0
+pressure1[pressure1 == 0] = np.nan
+
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname2 = '/Users/nyonn/Desktop/pythoncode/ORB0308_3.sav'
 sav_data2 = readsav(sav_fname2)
 
 alt1 = sav_data2['alt']
@@ -344,14 +470,86 @@ RMars = 3.4e6
 
 # pre_sev = pressure1 * np.exp((alt1*1e3)/((R*tamap1)/g))
 pre_sev = pressure1 * \
-    np.exp((alt1*1e3)/((R*tamap1)/(-Gconst * MMars /
+    np.exp((alt1*1e3)/((R*ta1)/(-Gconst * MMars /
            (-1*(RMars+alt1*1e3)*(RMars+alt1*1e3)))))
 
 
-fig = plt.figure(figsize=(2, 5), dpi=200)
-ax = fig.add_subplot(111, title='SP map orb0313_4')
-ax.set_ylim(36.7, 41)
-# cmapを指定することでカラーマップの様子を変更することができる
-im = ax.scatter(longi1, lati1, c=MOLA1, s=2,
-                cmap='jet')
-fig.colorbar(im, orientation='horizontal')
+fig = plt.figure(figsize=(8, 7), dpi=400)
+fig.suptitle("ORB0308_3 Pressure map", fontsize=20)
+ax1 = fig.add_subplot(121, title='Topography remove')
+ax2 = fig.add_subplot(122, title='Retrieval pressure')
+#ax3 = fig.add_subplot(133, title='MOLA topography')
+
+im1 = ax1.scatter(longi, lati, c=pre_sev, s=3,
+                  cmap='jet', vmin=550, vmax=670)
+fig.colorbar(im1, ax=ax1, pad=0.08, shrink=0.9,
+             aspect=50, orientation='horizontal', label='(Pa)')
+
+im2 = ax2.scatter(longi, lati, c=pressure1, s=3,
+                  cmap='jet', vmin=550, vmax=770)
+fig.colorbar(im2, ax=ax2, pad=0.08, shrink=0.9,
+             aspect=50, orientation='horizontal', label='(Pa)')
+
+# %%
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname1 = '/Users/nyonn/Desktop/pythoncode/SPmap_ORB6437_4.sav'
+sav_data1 = readsav(sav_fname1)
+print(sav_data1.keys())
+
+lati = sav_data1['lati']
+longi = sav_data1['longi']
+albedo = sav_data1['albedomap']
+altitude = sav_data1['altitude']
+dust = sav_data1['dustmap']
+ta = sav_data1['tamap']
+SP = sav_data1['mcdpressure']
+pressure = sav_data1['pressure']
+
+ip = len(lati[:, 0])
+io = len(lati[0, :])
+
+albedo1 = np.zeros((ip, io))
+albedo1 = albedo + 0
+albedo1[albedo1 == 0] = np.nan
+
+dust1 = np.zeros((ip, io))
+dust1 = dust + 0
+dust1[dust1 == 0] = np.nan
+
+altitude1 = np.zeros((ip, io))
+altitude1 = altitude + 0
+altitude1[altitude1 == 0] = np.nan
+
+ta1 = np.zeros((ip, io))
+ta1 = ta + 0
+ta1[ta1 == 0] = np.nan
+
+SP1 = np.zeros((ip, io))
+SP1 = SP + 0
+SP1[SP1 == 0] = np.nan
+
+pressure1 = np.zeros((ip, io))
+pressure1 = pressure + 0
+pressure1[pressure1 == 0] = np.nan
+
+fig = plt.figure(figsize=(12, 7), dpi=400)
+fig.suptitle("ORB0308_3 Relationship with Pressure", fontsize=20)
+ax1 = fig.add_subplot(131, title='Retrieval pressure')
+ax2 = fig.add_subplot(132, title='MCD prediction pressure')
+ax3 = fig.add_subplot(133, title='MOLA topography')
+
+im1 = ax1.scatter(longi, lati, c=pressure1, s=3,
+                  cmap='jet', vmin=550, vmax=770)
+fig.colorbar(im1, ax=ax1, pad=0.08, shrink=0.9,
+             aspect=50, orientation='horizontal', label='(Pa)')
+
+im2 = ax2.scatter(longi, lati, c=SP1, s=3, cmap='jet', vmin=550, vmax=770)
+fig.colorbar(im2, ax=ax2, pad=0.08, shrink=0.9,
+             aspect=50, orientation='horizontal', label='(Pa)')
+
+im3 = ax3.scatter(longi, lati, c=altitude1, s=3,
+                  cmap='jet')
+fig.colorbar(im3, ax=ax3, pad=0.08, shrink=0.9,
+             aspect=50, orientation='horizontal', label='(m)')
+
+# %%
