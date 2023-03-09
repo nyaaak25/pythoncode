@@ -12,6 +12,7 @@ Created on Tue Jun 28 17:48:00 2022
 import matplotlib.pylab as plt
 import numpy as np
 
+# %%
 fig = plt.figure(dpi=200)
 ax = fig.add_subplot(111, title='CO2 absorption')
 ax.grid(c='lightgray', zorder=1)
