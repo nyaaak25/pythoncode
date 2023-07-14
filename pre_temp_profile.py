@@ -18,10 +18,20 @@ g = 3.72  # m s-1
 R = 192  # R* = R/M, MはCO2分子量
 
 # Look-up-Table [Forget+, 2007] + T1に135, 285を足す
-T1 = np.array([135, 160, 213, 260, 285])  # K
-T2 = np.array([80, 146, 200])  # K
-Surface_pressure = np.array([50, 150, 180, 215, 257, 308,
-                             369, 442, 529, 633, 758, 907, 1096, 1300, 1500])  # Pa
+# T1 = np.array([135, 160, 213, 260, 285])  # K
+# T2 = np.array([80, 146, 200])  # K
+# Surface_pressure = np.array([50, 150, 180, 215, 257, 308,
+#                             369, 442, 529, 633, 758, 907, 1096, 1300, 1500])  # Pa
+
+# dust test profile case1
+#T1 = np.array([236.62156677246094])
+#T2 = np.array([151.51045227050781])
+#Surface_pressure = np.array([853.68115234375000])
+
+# dust test profile case2
+T1 = np.array([233.85560607910156])
+T2 = np.array([156.81031799316406])
+Surface_pressure = np.array([864.64227294921875])
 
 # hight profile
 Height_km = np.arange(0, 62, 2)  # km
@@ -52,7 +62,7 @@ for i in range(T1.size):
                     Temp[l] = T2[j]
 
 savearray = np.array([Height_km, pre, Temp])
-np.savetxt('LookUpTable_HTP/LUTable_T1_'+str(T1[i])+'_T2_'+str(
-    T2[j])+'_PRS'+str(Surface_pressure[k])+'.txt', savearray.T)
-
+# np.savetxt('LookUpTable_HTP/LUTable_T1_'+str(T1[i])+'_T2_'+str(
+#    T2[j])+'_PRS'+str(Surface_pressure[k])+'.txt', savearray.T)
+np.savetxt('ret_dust_2.txt', savearray.T)
 # %%

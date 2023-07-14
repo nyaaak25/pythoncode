@@ -8,7 +8,8 @@ import os
 
 def filesearch(dir):
     # 指定されたディレクトリ内の全てのファイルを取得
-    path_list = glob.glob("LookUpTable_HTP/*.txt")
+    # path_list = glob.glob("LookUpTable_HTP/*.txt")
+    path_list = glob.glob("ret_dust_2.txt")
     name_list = []                          # ファイル名の空リストを定義
 
     # ファイルのフルパスからファイル名と拡張子を抽出
@@ -40,7 +41,9 @@ for i in range(len(name_list)):
     # print(QplusT)
     # %%
     # データの指定
-    QplusT.to_csv('LookUpTable_Q/'+str(name_list[i])+'.csv',
+    # QplusT.to_csv('LookUpTable_Q/'+str(name_list[i])+'.csv',
+    #              columns=['Tempreture', 'Q'], index=False)
+    QplusT.to_csv(str(name_list[i])+'.csv',
                   columns=['Tempreture', 'Q'], index=False)
 
 
