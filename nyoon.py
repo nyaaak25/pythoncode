@@ -1,5 +1,8 @@
 # %%
 # LUTと観測データの吸収量を確認できるプログラム
+from scipy.interpolate import interp1d
+from scipy.interpolate import make_interp_spline
+from PIL import Image
 from numba import jit, f8
 import time
 from memory_profiler import profile
@@ -11,6 +14,153 @@ import numpy as np
 from scipy.io import readsav
 import scipy.io as sio
 from os.path import dirname, join as pjoin
+
+# %%
+data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
+sav_fname = 'ORB0923_3.sav'
+sav_data = readsav(sav_fname)
+
+wvl = sav_data['wvl']
+wvl = wvl[128:255]  # L channel
+CO2 = np.where((wvl > 2.66) & (wvl < 2.9))
+wvl = wvl[CO2]
+
+specmars = np.loadtxt(
+    '/Users/nyonn/IDLWorkspace/Default/profile/specsol_0403.dat')
+dmars = sav_data['dmars']
+specmars = specmars/dmars/dmars
+specmars = specmars[128:255]
+specmars = specmars[CO2]
+
+jdat = sav_data['jdat']
+jdat = jdat[:, 128:255, :]
+
+#flux = jdat[71, CO2, 1]
+flux = jdat[71, CO2, 1] / specmars
+#flux = jdat[71, CO2, 1]
+
+
+Dust_list = ['Dust=0.00', 'Dust=0.01', 'Dust=0.02', 'Dust=0.03', 'Dust=0.04',
+             'Dust=0.05', 'Dust=0.06', 'Dust=0.07', 'Dust=0.08', 'Dust=0.09', 'Dust=0.1']
+
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(111, title='2.7um CO2 absorption band')
+ax.grid(c='lightgray', zorder=1)
+ax.set_xlabel('Wavenumber [μm]', fontsize=10)
+
+for i in range(0, 11, 1):
+    ARS = np.loadtxt(
+        '/Users/nyonn/Desktop/pythoncode/output/loc1_dust' + str(i)+'.dat')
+    ARS_x = ARS[:, 0]
+    ARS_x = ARS_x[::-1]
+    ARS_wav = 1/ARS_x
+    ARS_x = (1/ARS_x)*10000
+    ARS_y = ARS[:, 1]
+    ARS_y = ARS_y[::-1]
+    ARS_y = (ARS_y/(ARS_wav*ARS_wav))*1e-7
+    ARS_y = ARS_y/specmars
+
+    ARS1 = np.loadtxt(
+        '/Users/nyonn/Desktop/pythoncode/output/loc2_dust' + str(i)+'_albedo.dat')
+    ARS_x1 = ARS1[:, 0]
+    ARS_x1 = ARS_x1[::-1]
+    ARS_wav1 = 1/ARS_x1
+    ARS_x1 = (1/ARS_x1)*10000
+
+    ARS_y1 = ARS1[:, 1]
+    ARS_y1 = ARS_y1[::-1]
+    ARS_y1 = (ARS_y1/(ARS_wav1*ARS_wav1))*1e-7
+    ARS_y1 = ARS_y1/specmars
+
+    #ax.plot(ARS_x, ARS_y, label=Dust_list[i], zorder=i, lw=1)
+    #ax.scatter(ARS_x1, ARS_y1, label=Dust_list[i], s=5)
+    ax.plot(ARS_x1, ARS_y1, label=Dust_list[i], zorder=i, lw=1)
+
+ax.scatter(wvl, flux[0], s=13, color='black')
+#ax.set_xlim(2.7, 2.8)
+ax.set_ylim(0, 0.02)
+h1, l1 = ax.get_legend_handles_labels()
+#ax.legend(h1, l1, loc='upper right', fontsize=5)
+
+
+# %%
+Dust_list = ['Dust=0.00', 'Dust=0.01', 'Dust=0.02', 'Dust=0.03', 'Dust=0.04',
+             'Dust=0.05', 'Dust=0.06', 'Dust=0.07', 'Dust=0.08', 'Dust=0.09', 'Dust=0.1']
+
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(111, title='2.7um CO2 absorption band')
+ax.grid(c='lightgray', zorder=1)
+ax.set_xlabel('Wavenumber [μm]', fontsize=10)
+
+for i in range(0, 11, 2):
+    ARS = np.loadtxt(
+        '/Users/nyonn/Desktop/pythoncode/output/loc1_dust' + str(i)+'.dat')
+    ARS_x = ARS[:, 0]
+    ARS_x = (1/ARS_x)*10000
+    ARS_x = ARS_x[::-1]
+    ARS_y = ARS[:, 1]
+    ARS_y = ARS_y[::-1]
+
+    ARS1 = np.loadtxt(
+        '/Users/nyonn/Desktop/pythoncode/output/loc2_dust' + str(i)+'.dat')
+    ARS_x1 = ARS1[:, 0]
+    ARS_x1 = (1/ARS_x)*10000
+    ARS_x1 = ARS_x1[::-1]
+    ARS_y1 = ARS1[:, 1]
+    ARS_y1 = ARS_y1[::-1]
+
+    ax.plot(ARS_x, ARS_y, label=Dust_list[i], zorder=i, lw=1)
+
+h1, l1 = ax.get_legend_handles_labels()
+ax.legend(h1, l1, loc='lower right', fontsize=5)
+
+
+# %%
+# 可視から変換
+dust_opacity = 0.1
+dust = dust_opacity/1.2090217E+00*4.6232791E+00
+print(dust)
+
+# %%
+# 熱潮汐波の解析
+# Ls 50.5 to 51.5
+
+# x = [50.6570, 50.6590, 50.7800, 50.7830, 51.0280,
+#     51.0310, 51.1520, 51.3990, 51.4010, 51.5220]
+# y = [607.59261, 650.45576, 622.93770, 631.14177, 617.54949,
+#     636.68401, 594.7369, 596.40116, 600.33611, 585.35991]
+
+# Ls 86 to 88
+x = [86.5850, 86.5880, 86.5900, 86.5940, 86.7080,
+     86.7110, 86.7140, 86.7160]
+y = [496.92280, 521.92310, 511.33081, 614.49803, 517.48362,
+     516.00874, 491.78233, 539.44787]
+
+#model=make_interp_spline(x, y, k='cubic')
+
+xs = np.linspace(np.min(x), np.max(x), np.size(x)*100)
+model = interp1d(x, y, kind='cubic')
+ys = model(xs)
+
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(111)
+ax.set_xlabel('Ls [deg]', fontsize=10)
+ax.plot(x, y)
+ax.scatter(x, y)
+ax.set_xlim(86.5, 87)
+
+# %%
+# animetion gifを作成
+pictures = []
+for i in range(0, 71, 1):
+    num1 = 0 + (i * 5)
+    num2 = 5 + (i * 5)
+    pic_name = '/Users/nyonn/Desktop/pythoncode/QL_test/5_EW_MY28_Ls' + \
+        str(num1) + '-' + str(num2) + '.jpg'
+    img = Image.open(pic_name)
+    pictures.append(img)
+pictures[0].save('anime3.gif', save_all=True, append_images=pictures[1:],
+                 optimize=True, duration=700, loop=0)
 
 # %%
 # OMEGA dataとARS dataのfittingをみる
@@ -1069,39 +1219,43 @@ ax = fig.add_subplot(111, title='Deffernce due to cut off')
 ax.grid(c='lightgray', zorder=1)
 ax.set_xlabel('Wavenumber [cm-1]', fontsize=10)
 ax.set_ylabel('defference [%]', fontsize=10)
-ax.set_xlim(4800,5100)
-ax.set_ylim(0,10)
+ax.set_xlim(4800, 5100)
+ax.set_ylim(0, 10)
 
-nocutoff = np.loadtxt('/Users/nyonn/Desktop/pythoncode/not use file/4445-5656_0.01step.txt')
-wav = nocutoff[:,0]
-ind  = np.where((wav >= 4545) & (wav < 5556))
+nocutoff = np.loadtxt(
+    '/Users/nyonn/Desktop/pythoncode/not use file/4445-5656_0.01step.txt')
+wav = nocutoff[:, 0]
+ind = np.where((wav >= 4545) & (wav < 5556))
 wav = wav[ind]
-no = nocutoff[:,1]
+no = nocutoff[:, 1]
 no = no[ind]
 #no = np.exp(no)
 
-cutoff50 = np.loadtxt('/Users/nyonn/Desktop/pythoncode/not use file/4545-5556_0.01step_cutoff_50.txt')
-wav50 = cutoff50[:,0]
-ind50  = np.where((wav50 >= 4545) & (wav50 < 5556))
-c50 = cutoff50[:,1]
+cutoff50 = np.loadtxt(
+    '/Users/nyonn/Desktop/pythoncode/not use file/4545-5556_0.01step_cutoff_50.txt')
+wav50 = cutoff50[:, 0]
+ind50 = np.where((wav50 >= 4545) & (wav50 < 5556))
+c50 = cutoff50[:, 1]
 c50 = c50[ind50]
 c50 = np.exp(c50)
 
-cutoff80 = np.loadtxt('/Users/nyonn/Desktop/pythoncode/not use file/4545-5556_0.01step_cutoff_80.txt')
-wav80 = cutoff80[:,0]
-ind80  = np.where((wav80 >= 4545) & (wav80 < 5556))
-c80 = cutoff80[:,1]
+cutoff80 = np.loadtxt(
+    '/Users/nyonn/Desktop/pythoncode/not use file/4545-5556_0.01step_cutoff_80.txt')
+wav80 = cutoff80[:, 0]
+ind80 = np.where((wav80 >= 4545) & (wav80 < 5556))
+c80 = cutoff80[:, 1]
 c80 = c80[ind80]
 c80 = np.exp(c80)
 
-cutoff120 = np.loadtxt('/Users/nyonn/Desktop/pythoncode/not use file/4545-5556_0.01step_cutoff_120.txt')
-wav120 = cutoff120[:,0]
-ind120  = np.where((wav120 >= 4545) & (wav120 < 5556))
-c120 = cutoff120[:,1]
+cutoff120 = np.loadtxt(
+    '/Users/nyonn/Desktop/pythoncode/not use file/4545-5556_0.01step_cutoff_120.txt')
+wav120 = cutoff120[:, 0]
+ind120 = np.where((wav120 >= 4545) & (wav120 < 5556))
+c120 = cutoff120[:, 1]
 c120 = c120[ind120]
 #c120 = np.exp(c120)
 
-#差を取る
+# 差を取る
 dif50 = (no-c50)*100/no
 dif80 = (no-c80)*100/no
 dif120 = (no-c120)*100/no
@@ -1109,6 +1263,16 @@ dif120 = (no-c120)*100/no
 #ax.plot(wav, no, label="no cutoff",zorder=4)
 #ax.plot(wav, dif50, label="cutoff 50",zorder=1)
 #ax.plot(wav, dif80, label="cutoff 80",zorder=2)
-ax.plot(wav, dif120, label="cutoff 120",zorder=3)
+ax.plot(wav, dif120, label="cutoff 120", zorder=3)
 h1, l1 = ax.get_legend_handles_labels()
 ax.legend(h1, l1, loc='lower right', fontsize=7)
+
+# %%
+dust = np.loadtxt('MY28_Ls.dat', usecols=(0, 1, 2, 3, 6, 7))
+fig = plt.figure(figsize=(4, 2), dpi=400)
+ax = fig.add_subplot(111, title='Dust storm map')
+ax.scatter(dust[0:8, 1], dust[0:8, 2], s=2, color='red')
+ax.scatter(dust[8, 1], dust[8, 2], s=15, color='blue')
+ax.scatter(dust[9:30, 1], dust[9:30, 2], s=2, color='green')
+ax.set_xlim(-180, 180)
+ax.set_ylim(-90, 90)
