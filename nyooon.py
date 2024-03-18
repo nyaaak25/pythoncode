@@ -13,29 +13,156 @@ import time
 from numba import jit, f8
 
 # %%
-data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
-sav_fname = 'work_ORB0920_3.sav'
+# Retrieval errorの試算をするためのグラフ作成
+# 温度による依存性
+temp = [-10, 10]
+
+# ダストが十分に薄いとき
+dust_thin = 0.0019
+dust_thin_plus = 0.0034
+dust_thin_minus = 0.0008
+
+# 相対値でみる
+dust_thin_plus_result = (dust_thin - dust_thin_plus) * 100 / dust_thin
+dust_thin_minus_result = (dust_thin - dust_thin_minus) * 100 / dust_thin
+
+# 絶対値でみる
+# dust_thin_plus_result = dust_thin - dust_thin_plus
+# dust_thin_minus_result = dust_thin - dust_thin_minus
+
+thin_condi = [dust_thin_minus_result, dust_thin_plus_result]
+
+# ダストが十分に濃いとき
+dust_thick = 0.253
+dust_thick_plus = 0.262
+dust_thick_minus = 0.244
+
+# 絶対値でみる
+dust_thick_plus_result = (dust_thick - dust_thick_plus) * 100 / dust_thick
+dust_thick_minus_result = (dust_thick - dust_thick_minus) * 100 / dust_thick
+
+# 相対値でみる
+# dust_thick_plus_result = dust_thick - dust_thick_plus
+# dust_thick_minus_result = dust_thick - dust_thick_minus
+
+thick_condi = [dust_thick_minus_result, dust_thick_plus_result]
+
+# GDS期間中のダスト
+dust_gds = 0.70
+dust_gds_plus = 0.719
+dust_gds_minus = 0.689
+
+# 絶対値でみる
+dust_gds_plus_result = (dust_gds - dust_gds_plus) * 100 / dust_gds
+dust_gds_minus_result = (dust_gds - dust_gds_minus) * 100 / dust_gds
+
+# 相対値でみる
+# dust_gds_plus_result = dust_gds - dust_gds_plus
+# dust_gds_minus_result = dust_gds - dust_gds_minus
+
+gds_condi = [dust_gds_minus_result, dust_gds_plus_result]
+
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(
+    111, title="Influence of the temperature uncertainties on the dust retrieval"
+)
+ax.set_xlabel("Temperature deviation (K)", fontsize=10)
+ax.set_ylabel("Dust optical depth deviation(%)", fontsize=10)
+ax.plot(temp, thin_condi, color="blue", label="dust thin condition")
+ax.plot(temp, thick_condi, color="red", label="dust thick condition")
+ax.plot(temp, gds_condi, color="black", label="global dust storm period")
+h1, l1 = ax.get_legend_handles_labels()
+ax.legend(h1, l1, loc="lower left", fontsize=7)
+
+# %%
+# 圧力による依存性
+temp = [-50, 50]
+
+# ダストが十分に薄いとき
+dust_thin = 0.0019
+dust_thin_plus = -0.0017
+dust_thin_minus = 0.005
+
+# 相対値でみる
+dust_thin_plus_result = (dust_thin - dust_thin_plus) * 100 / dust_thin
+dust_thin_minus_result = (dust_thin - dust_thin_minus) * 100 / dust_thin
+
+# 絶対値でみる
+# dust_thin_plus_result = dust_thin - dust_thin_plus
+# dust_thin_minus_result = dust_thin - dust_thin_minus
+
+thin_condi = [dust_thin_minus_result, dust_thin_plus_result]
+
+# ダストが十分に濃いとき
+dust_thick = 0.253
+dust_thick_plus = 0.204
+dust_thick_minus = 0.306
+
+# 絶対値でみる
+dust_thick_plus_result = (dust_thick - dust_thick_plus) * 100 / dust_thick
+dust_thick_minus_result = (dust_thick - dust_thick_minus) * 100 / dust_thick
+
+# 相対値でみる
+# dust_thick_plus_result = dust_thick - dust_thick_plus
+# dust_thick_minus_result = dust_thick - dust_thick_minus
+
+thick_condi = [dust_thick_minus_result, dust_thick_plus_result]
+
+# GDS期間中のダスト
+dust_gds = 0.70
+dust_gds_plus = 0.649
+dust_gds_minus = 0.760
+
+# 絶対値でみる
+dust_gds_plus_result = (dust_gds - dust_gds_plus) * 100 / dust_gds
+dust_gds_minus_result = (dust_gds - dust_gds_minus) * 100 / dust_gds
+
+# 相対値でみる
+# dust_gds_plus_result = dust_gds - dust_gds_plus
+# dust_gds_minus_result = dust_gds - dust_gds_minus
+
+
+gds_condi = [dust_gds_minus_result, dust_gds_plus_result]
+
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(
+    111, title="Influence of the surface pressure uncertainties on the dust retrieval"
+)
+ax.set_xlabel("Surface pressure deviation (Pa)", fontsize=10)
+ax.set_ylabel("Dust optical depth deviation(%)", fontsize=10)
+ax.plot(temp, thin_condi, color="blue", label="dust thin condition")
+ax.plot(temp, thick_condi, color="red", label="dust thick condition")
+ax.plot(temp, gds_condi, color="black", label="global dust storm period")
+h1, l1 = ax.get_legend_handles_labels()
+ax.legend(h1, l1, loc="lower right", fontsize=7)
+
+
+# %%
+data_dir = pjoin(dirname(sio.__file__), "tests", "data")
+sav_fname = "work_ORB0920_3.sav"
 sav_data = readsav(sav_fname)
 print(sav_data.keys())
-lati = sav_data['lati']
-longi = sav_data['longi']
+lati = sav_data["lati"]
+longi = sav_data["longi"]
 
-pressure = sav_data['pressure']
+pressure = sav_data["pressure"]
 pressure[pressure <= 0] = np.nan
 
 fig = plt.figure(figsize=(6, 13), dpi=200)
-ax = fig.add_subplot(111, title='CO2 absorption')
+ax = fig.add_subplot(111, title="CO2 absorption")
 ax.set_xlim(271, 278)
 ax.set_ylim(50, 61)
+ax.plot(ARS_x, ARS_y, color="blue", label="fitting", zorder=2)
 im = ax.scatter(longi, lati, c=pressure, s=2)
-fig.colorbar(im, orientation='horizontal')
+fig.colorbar(im, orientation="horizontal")
 
 # %%
 # linfitさせて吸収の深さを計算する
 ARS = np.loadtxt(
-    '/Users/nyonn/Desktop/pythoncode/ARS_calc/SP12_TA1_TB1_SZA1_EA1_PA1_Dust1_WaterI1_SurfaceA1_rad.dat')
+    "/Users/nyonn/Desktop/pythoncode/ARS_calc/SP12_TA1_TB1_SZA1_EA1_PA1_Dust1_WaterI1_SurfaceA1_rad.dat"
+)
 ARS_x = ARS[:, 0]
-ARS_x = (1/ARS_x)*10000
+ARS_x = (1 / ARS_x) * 10000
 ARS_x = ARS_x[::-1]
 ARS_y = ARS[:, 1]
 ARS_y = ARS_y[::-1]
@@ -45,16 +172,16 @@ POLY_x = [ARS_x[0], ARS_x[3], ARS_x[5], ARS_x[23], ARS_x[24], ARS_x[25]]
 POLY_y = [ARS_y[0], ARS_y[3], ARS_y[5], ARS_y[23], ARS_y[24], ARS_y[25]]
 a, b = np.polyfit(POLY_x, POLY_y, 1)
 
-cont0 = b + a*ARS_x
-y_calc = 1 - ARS_y/cont0
+cont0 = b + a * ARS_x
+y_calc = 1 - ARS_y / cont0
 y_total = np.sum(y_calc[6:17])
 
 fig = plt.figure(dpi=200)
-ax = fig.add_subplot(111, title='CO2 absorption')
-ax.grid(c='lightgray', zorder=1)
-ax.set_xlabel('Wavenumber [μm]', fontsize=10)
-ax.plot(ARS_x, ARS_y, color='blue', label="fitting", zorder=2)
-ax.plot(ARS_x, cont0, color='red', label="Observation", zorder=1)
+ax = fig.add_subplot(111, title="CO2 absorption")
+ax.grid(c="lightgray", zorder=1)
+ax.set_xlabel("Wavenumber [μm]", fontsize=10)
+ax.plot(ARS_x, ARS_y, color="blue", label="fitting", zorder=2)
+ax.plot(ARS_x, cont0, color="red", label="Observation", zorder=1)
 ax.axvline(x=ARS_x[3])
 ax.axvline(x=ARS_x[20])
 # 9:19が1.94~2.09μm
@@ -65,22 +192,21 @@ ax.axvline(x=ARS_x[20])
 # IDLで計算されたものとの整合性を取るテスト
 # %%
 
-data_dir = pjoin(dirname(sio.__file__), 'tests', 'data')
-sav_fname = '/Users/nyonn/IDLWorkspace/Default/savfile/ORB0313_4.sav'
+data_dir = pjoin(dirname(sio.__file__), "tests", "data")
+sav_fname = "/Users/nyonn/IDLWorkspace/Default/savfile/ORB0313_4.sav"
 sav_data = readsav(sav_fname)
 print(sav_data.keys())
-wvl = sav_data['wvl']
+wvl = sav_data["wvl"]
 
-specmars = np.loadtxt(
-    '/Users/nyonn/IDLWorkspace/Default/profile/specsol_0403.dat')
-dmars = sav_data['dmars']
-specmars = specmars/dmars/dmars
+specmars = np.loadtxt("/Users/nyonn/IDLWorkspace/Default/profile/specsol_0403.dat")
+dmars = sav_data["dmars"]
+specmars = specmars / dmars / dmars
 
 CO2 = np.where((wvl > 1.81) & (wvl < 2.19))
 specmars = specmars[CO2]
 wvl = wvl[CO2]
 
-jdat = sav_data['jdat']
+jdat = sav_data["jdat"]
 # %%
 nwvl = len(wvl)
 io = len(jdat[1, 1, :])
@@ -92,18 +218,24 @@ for i in range(io):
         # flux[i, :, o] = jdat[o, CO2, i]/specmars
         flux[i, :, o] = jdat[o, CO2, i]
 
-longi = sav_data['longi']
-lati = sav_data['lati']
+longi = sav_data["longi"]
+lati = sav_data["lati"]
 maxlongi = np.max(longi)
 minlongi = np.min(longi)
 maxlati = np.max(lati)
 minlati = np.min(lati)
 
 x = [wvl[0], wvl[1], wvl[2], wvl[23], wvl[24], wvl[25]]
-y = [flux[0, 0, 0], flux[0, 1, 0], flux[0, 2, 0],
-     flux[0, 23, 0], flux[0, 24, 0], flux[0, 25, 0]]
+y = [
+    flux[0, 0, 0],
+    flux[0, 1, 0],
+    flux[0, 2, 0],
+    flux[0, 23, 0],
+    flux[0, 24, 0],
+    flux[0, 25, 0],
+]
 a, b = np.polyfit(x, y, 1)
-cont = b + a*wvl
+cont = b + a * wvl
 
 radiance = jdat[0, :, 0]
 
@@ -117,23 +249,45 @@ radiance = [3.04291914e-01, 3.01133918e-01, 2.99194302e-01, 3.01644108e-01,
        2.97765150e-01, 2.98931135e-01, np.nan]
 """
 
-radiance = [6.0231223e+00, 5.8426933e+00, 5.6736460e+00, 5.5487056e+00,
-            5.1142383e+00, 4.8854246e+00, 4.9333162e+00, 4.7842565e+00,
-            4.7933760e+00, 4.1179385e+00, 2.4188302e+00, 2.8826861e+00,
-            3.9918549e+00, 2.6615460e+00, 1.0469103e+00, 2.7060721e+00,
-            np.nan, 2.3625975e+00, 2.3858469e+00, 3.0465832e+00,
-            3.2991776e+00, 3.4420812e+00, 3.4416115e+00, 3.4568799e+00,
-            3.2720873e+00, 3.1409810e+00, np.nan]
+radiance = [
+    6.0231223e00,
+    5.8426933e00,
+    5.6736460e00,
+    5.5487056e00,
+    5.1142383e00,
+    4.8854246e00,
+    4.9333162e00,
+    4.7842565e00,
+    4.7933760e00,
+    4.1179385e00,
+    2.4188302e00,
+    2.8826861e00,
+    3.9918549e00,
+    2.6615460e00,
+    1.0469103e00,
+    2.7060721e00,
+    np.nan,
+    2.3625975e00,
+    2.3858469e00,
+    3.0465832e00,
+    3.2991776e00,
+    3.4420812e00,
+    3.4416115e00,
+    3.4568799e00,
+    3.2720873e00,
+    3.1409810e00,
+    np.nan,
+]
 
-width = 1 - (radiance/cont)
+width = 1 - (radiance / cont)
 band = np.where((wvl >= 1.94) & (wvl <= 1.99))
 obs_spec = np.nansum(width[band])
 
 fig = plt.figure(dpi=200)
-ax = fig.add_subplot(111, title='CO2 absorption')
-ax.grid(c='lightgray', zorder=1)
-ax.plot(wvl, cont, color='red', label="fitting", zorder=2)
-ax.plot(wvl, radiance, color='blue', label="Observation", zorder=1)
+ax = fig.add_subplot(111, title="CO2 absorption")
+ax.grid(c="lightgray", zorder=1)
+ax.plot(wvl, cont, color="red", label="fitting", zorder=2)
+ax.plot(wvl, radiance, color="blue", label="Observation", zorder=1)
 ax.scatter(x, y)
 ax.axvline(x=wvl[9])
 ax.axvline(x=wvl[12])
@@ -146,19 +300,20 @@ ax.axvline(x=wvl[12])
 def filesearch(dir):
     # 指定されたディレクトリ内の全てのファイルを取得
     path_list = glob.glob("LookUpTable_HTP/*.txt")
-    name_list = []                          # ファイル名の空リストを定義
-    ext_list = []                           # 拡張子の空リストを定義
-    out_list = []                           # 保存パスの空リストを定義
+    name_list = []  # ファイル名の空リストを定義
+    ext_list = []  # 拡張子の空リストを定義
+    out_list = []  # 保存パスの空リストを定義
 
     # ファイルのフルパスからファイル名と拡張子を抽出
     for i in path_list:
-        file = os.path.basename(i)          # 拡張子ありファイル名を取得
+        file = os.path.basename(i)  # 拡張子ありファイル名を取得
         name, ext = os.path.splitext(file)  # 拡張子なしファイル名と拡張子を取得
-        name_list.append(name)              # 拡張子なしファイル名をリスト化
-        ext_list.append(ext)                # 拡張子をリスト化
-        out_list.append(os.path.join(
-            *[dir, name + '_resize' + ext]))  # 保存パスを作成
+        name_list.append(name)  # 拡張子なしファイル名をリスト化
+        ext_list.append(ext)  # 拡張子をリスト化
+        out_list.append(os.path.join(*[dir, name + "_resize" + ext]))  # 保存パスを作成
     return path_list, name_list, ext_list, out_list
+
+
 # %%
 # 気圧と温度プロファイルを導出する
 
@@ -169,25 +324,40 @@ g = 3.72  # m s-1
 R = 192
 T1 = [160, 213, 260]  # K
 T2 = [80, 146, 200]  # K
-Surface_pressure = [50, 150, 180, 215, 257, 308,
-                    369, 442, 529, 633, 758, 907, 1096, 1300, 1500]  # Pa
+Surface_pressure = [
+    50,
+    150,
+    180,
+    215,
+    257,
+    308,
+    369,
+    442,
+    529,
+    633,
+    758,
+    907,
+    1096,
+    1300,
+    1500,
+]  # Pa
 
 # hight profile
 Hight_km = np.arange(0, 62, 2)  # km
 Hight = Hight_km * 1000  # m
 
 # Scale Hight
-SH = (R*T1[1])/g
+SH = (R * T1[1]) / g
 
 # pressure profile
-pre = Surface_pressure[9] * np.exp(-Hight/SH)
+pre = Surface_pressure[9] * np.exp(-Hight / SH)
 
 # Temp profile
-H1 = SH*0.1
-H2 = SH*4.0
+H1 = SH * 0.1
+H2 = SH * 4.0
 
-a = (T1[1]-T2[1])/(H1-H2)
-b = T1[1]-a*H1
+a = (T1[1] - T2[1]) / (H1 - H2)
+b = T1[1] - a * H1
 
 Temp = np.zeros(len(Hight))
 for i in range(len(Hight)):
@@ -200,21 +370,48 @@ print(Temp)
 # %%
 
 # 波数
-v_txt = np.loadtxt('4545-5556_0.01step_cutoff_120.txt')
+v_txt = np.loadtxt("4545-5556_0.01step_cutoff_120.txt")
 v1 = v_txt[:, 0]  # cm-1
-cm_v = (1/v1)*10000
+cm_v = (1 / v1) * 10000
 wav = cm_v[::-1]  # um
 
 # 光学的厚み→放射強度
-tau_txt = np.loadtxt('4545-5556_0.01step_cutoff_120.txt')
+tau_txt = np.loadtxt("4545-5556_0.01step_cutoff_120.txt")
 tau1 = tau_txt[:, 1]
 tau = tau1[::-1]
 sza_theta = 18.986036
-I0 = np.exp(-tau/np.cos(sza_theta))
+I0 = np.exp(-tau / np.cos(sza_theta))
 Iobs = I0 * np.exp(-tau)
 
-OMEGAcenter_list = [1.8143300, 1.8284900, 1.8426300, 1.8567700, 1.8708900, 1.8850000, 1.8990901, 1.9131700, 1.9272400, 1.9412900, 1.9553300, 1.9693500, 1.9833500,
-                    1.9973400, 2.0113201, 2.0252800, 2.0392201, 2.0531399, 2.0670500, 2.0809400, 2.0948100, 2.1086600, 2.1224899, 2.1363101, 2.1501000, 2.1638801, 2.1776299]
+OMEGAcenter_list = [
+    1.8143300,
+    1.8284900,
+    1.8426300,
+    1.8567700,
+    1.8708900,
+    1.8850000,
+    1.8990901,
+    1.9131700,
+    1.9272400,
+    1.9412900,
+    1.9553300,
+    1.9693500,
+    1.9833500,
+    1.9973400,
+    2.0113201,
+    2.0252800,
+    2.0392201,
+    2.0531399,
+    2.0670500,
+    2.0809400,
+    2.0948100,
+    2.1086600,
+    2.1224899,
+    2.1363101,
+    2.1501000,
+    2.1638801,
+    2.1776299,
+]
 
 OMEGAchannel = np.zeros(len(OMEGAcenter_list))
 
@@ -238,7 +435,7 @@ for k in range(len(OMEGAcenter_list)):
     OMEGAchannel[k] = average_I
 
 tau_v = np.stack([OMEGAcenter_list, OMEGAchannel], 1)
-np.savetxt('0.01_BOXinstrumentfunction.txt', tau_v, fmt='%.10e')
+np.savetxt("0.01_BOXinstrumentfunction.txt", tau_v, fmt="%.10e")
 
 plt.plot(OMEGAcenter_list, OMEGAchannel)
 plt.show()
@@ -286,7 +483,7 @@ plt.show()
 
 
 def GAUSSIAN(sig, mu, x):
-    f_x = (1/np.sqrt(2*np.pi*sig))*np.exp(-((x-mu)**2)/(2*sig**2))
+    f_x = (1 / np.sqrt(2 * np.pi * sig)) * np.exp(-((x - mu) ** 2) / (2 * sig**2))
 
     return f_x
 
@@ -295,13 +492,13 @@ def main():
     spectral = np.zeros((len(OMEGAcenter_list)))
     sig = 6.5e-3
     # 波数
-    v_txt = np.loadtxt('4545-5556_0.001step_cutoff_120.txt')
+    v_txt = np.loadtxt("4545-5556_0.001step_cutoff_120.txt")
     v1 = v_txt[:, 0]  # cm-1
-    cm_v = (1/v1)*10000
+    cm_v = (1 / v1) * 10000
     v = cm_v[::-1]  # um
 
     # 光学的厚み
-    tau_txt = np.loadtxt('4545-5556_0.001step_cutoff_120.txt')
+    tau_txt = np.loadtxt("4545-5556_0.001step_cutoff_120.txt")
     x = tau_txt[:, 1]
 
     for k in range(len(OMEGAcenter_list)):
@@ -312,10 +509,10 @@ def main():
 
     # データセーブ
     tau_v = np.stack([OMEGAcenter_list, spectral], 1)
-    np.savetxt('test_OMEGAinstrumentfunction.txt', tau_v, fmt='%.10e')
+    np.savetxt("test_OMEGAinstrumentfunction.txt", tau_v, fmt="%.10e")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 
 
