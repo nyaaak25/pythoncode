@@ -66,6 +66,67 @@ ax.set_xlim(2.65, 2.85)
 ax.set_ylim(-0.01, 0.2)
 
 
+# Dust paper fugure 2.2作成用のプログラム
+Dust_list = ["Dust=0.00", "Dust=0.01", "Dust=0.02", "Dust=0.03", "Dust=0.04", "Dust=0.05", "Dust=0.06", "Dust=0.07", "Dust=0.08", "Dust=0.09", "Dust=0.1"]
+
+fig = plt.figure(dpi=800)
+ax = fig.add_subplot(111)
+ax.set_xlabel("Wavenumber [μm]", fontsize=10)
+ax.set_ylabel("Radiance", fontsize=10)
+
+for i in range(0, 11, 3):
+    ARS = np.loadtxt(
+        "/Users/nyonn/Desktop/pythoncode/output/old/output/loc1_dust" + str(i) + ".dat"
+    )
+    ARS_x = ARS[:, 0]
+    ARS_x = ARS_x[::-1]
+    ARS_wav = 1 / ARS_x
+    ARS_x = (1 / ARS_x) * 10000
+    ARS_y = ARS[:, 1]
+    ARS_y = ARS_y[::-1]
+    ARS_y = (ARS_y / (ARS_wav * ARS_wav)) * 1e-7
+
+    ax.plot(ARS_x, ARS_y, label=Dust_list[i], zorder=i, lw=3)
+    ax.scatter(ARS_x[5], ARS_y[5])
+
+ax.set_xlim(2.65, 2.85)
+ax.set_ylim(0, 0.02)
+h1, l1 = ax.get_legend_handles_labels()
+ax.legend(h1, l1, loc="lower right", fontsize=8)
+
+# Figure 2.2.の全体を移すやつのもの
+# %%
+from matplotlib import patches
+
+# Dust paper fugure 2.2作成用のプログラム
+Dust_list = ["Dust=0.00", "Dust=0.01", "Dust=0.02", "Dust=0.03", "Dust=0.04", "Dust=0.05", "Dust=0.06", "Dust=0.07", "Dust=0.08", "Dust=0.09", "Dust=0.1"]
+
+fig = plt.figure(dpi=800)
+ax = fig.add_subplot(111)
+ax.set_xlabel("Wavenumber [μm]", fontsize=10)
+ax.set_ylabel("Radiance", fontsize=10)
+
+for i in range(0, 11, 3):
+    ARS = np.loadtxt(
+        "/Users/nyonn/Desktop/pythoncode/output/old/output/loc1_dust" + str(i) + ".dat"
+    )
+    ARS_x = ARS[:, 0]
+    ARS_x = ARS_x[::-1]
+    ARS_wav = 1 / ARS_x
+    ARS_x = (1 / ARS_x) * 10000
+    ARS_y = ARS[:, 1]
+    ARS_y = ARS_y[::-1]
+    ARS_y = (ARS_y / (ARS_wav * ARS_wav)) * 1e-7
+
+    ax.plot(ARS_x, ARS_y, label=Dust_list[i], zorder=i, lw=3)
+    #ax.scatter(ARS_x[5], ARS_y[5])
+ax.set_ylim(0, 0.5)
+r = patches.Rectangle( (2.765,0) , 0.02, 0.02, fill=False, edgecolor="black", linewidth=2, zorder=7)
+ax.add_patch(r)
+h1, l1 = ax.get_legend_handles_labels()
+ax.legend(h1, l1, loc="lower right", fontsize=8)
+
+
 # %%
 # Figure 2,4-2,5を作成するプログラム
 data_dir = pjoin(dirname(sio.__file__), "tests", "data")
@@ -161,10 +222,11 @@ print('+10 K: ', dust_con3_per[20])
 print('retrieval dust: ', dust_GDS[20])
 print('------------------------------------')
 
+
 # %%
 # Surface pressure deviation
 # condition1を代入
-sav_fname1 = "/Users/nyonn/Desktop/con1_SP.sav"
+sav_fname1 = "/Users/nyonn/Desktop/論文/retrieval dust/2章：Describe the method/data/con1_SP.sav"
 sav_data1 = readsav(sav_fname1)
 surface_pressure = sav_data1["dev"]
 dust_thin = sav_data1["dust_result"]
@@ -172,14 +234,14 @@ dust_con1 = dust_thin - dust_thin[50]
 dust_con1_per = (dust_con1 * 100) / dust_thin[50]
 
 # condition2を代入
-sav_fname2 = "/Users/nyonn/Desktop/con2_SP.sav"
+sav_fname2 = "/Users/nyonn/Desktop/論文/retrieval dust/2章：Describe the method/data/con2_SP.sav"
 sav_data2 = readsav(sav_fname2)
 dust_DS = sav_data2["dust_result"]
 dust_con2 = dust_DS - dust_DS[50]
 dust_con2_per = (dust_con2 * 100) / dust_DS[50]
 
 # condition3を代入
-sav_fname3 = "/Users/nyonn/Desktop/con3_SP.sav"
+sav_fname3 = "/Users/nyonn/Desktop/論文/retrieval dust/2章：Describe the method/data/con3_SP.sav"
 sav_data3 = readsav(sav_fname3)
 dust_GDS = sav_data3["dust_result"]
 dust_con3 = dust_GDS - dust_GDS[50]
@@ -251,32 +313,156 @@ print('+50 Pa: ', dust_con3[100])
 print('+50 Pa: ', dust_con3_per[100])
 print('retrieval dust: ', dust_GDS[100])
 print('------------------------------------')
+
 # %%
+# radiance variation
+# condition1を代入
+data_dir = pjoin(dirname(sio.__file__), "tests", "data")
 
-# Dust paper fugure 2.2作成用のプログラム
-Dust_list = ["Dust=0.00", "Dust=0.01", "Dust=0.02", "Dust=0.03", "Dust=0.04", "Dust=0.05", "Dust=0.06", "Dust=0.07", "Dust=0.08", "Dust=0.09", "Dust=0.1"]
+sav_fname1 = "/Users/nyonn/Desktop/論文/retrieval dust/2章：Describe the method/data/con1_rad_result.sav"
+sav_data1 = readsav(sav_fname1)
+surface_pressure = sav_data1["dev"]
+dust_thin = sav_data1["dust_result"]
+dust_con1 = dust_thin - dust_thin[37]
+dust_con1_per = (dust_con1 * 100) / dust_thin[37]
 
-fig = plt.figure(dpi=800)
-ax = fig.add_subplot(111)
-ax.set_xlabel("Wavenumber [μm]", fontsize=10)
-ax.set_ylabel("Radiance", fontsize=10)
+# condition2を代入
+sav_fname2 = "/Users/nyonn/Desktop/論文/retrieval dust/2章：Describe the method/data/con2_rad_result.sav"
+sav_data2 = readsav(sav_fname2)
+dust_DS = sav_data2["dust_result"]
+dust_con2 = dust_DS - dust_DS[37]
+dust_con2_per = (dust_con2 * 100) / dust_DS[37]
 
-for i in range(0, 11, 3):
-    ARS = np.loadtxt(
-        "/Users/nyonn/Desktop/pythoncode/output/old/output/loc1_dust" + str(i) + ".dat"
-    )
-    ARS_x = ARS[:, 0]
-    ARS_x = ARS_x[::-1]
-    ARS_wav = 1 / ARS_x
-    ARS_x = (1 / ARS_x) * 10000
-    ARS_y = ARS[:, 1]
-    ARS_y = ARS_y[::-1]
-    ARS_y = (ARS_y / (ARS_wav * ARS_wav)) * 1e-7
+# condition3を代入
+sav_fname3 = "/Users/nyonn/Desktop/論文/retrieval dust/2章：Describe the method/data/con3_rad_result.sav"
+sav_data3 = readsav(sav_fname3)
+dust_GDS = sav_data3["dust_result"]
+dust_con3 = dust_GDS - dust_GDS[37]
+dust_con3_per = (dust_con3 * 100) / dust_GDS[37]
 
-    ax.plot(ARS_x, ARS_y, label=Dust_list[i], zorder=i, lw=3)
-    ax.scatter(ARS_x[5], ARS_y[5])
-
-ax.set_xlim(2.65, 2.85)
-ax.set_ylim(0, 0.02)
+# absolute valueのplot
+fig = plt.figure(dpi=500)
+ax = fig.add_subplot(
+    111, title="Influence of the signal noise uncertainties on the dust retrieval"
+)
+ax.set_xlabel("Signal noize deviation (DN)", fontsize=10)
+ax.set_ylabel("Dust optical depth deviation", fontsize=10)
+ax.plot(surface_pressure, dust_con1, color="blue", label="(1) dust thin condition")
+ax.plot(surface_pressure, dust_con2, color="red", label="(2) dust thick condition")
+ax.plot(surface_pressure, dust_con3, color="black", label="(3) global dust storm period")
 h1, l1 = ax.get_legend_handles_labels()
-ax.legend(h1, l1, loc="lower right", fontsize=8)
+ax.legend(h1, l1, loc="lower right", fontsize=9)
+
+# Relative valueのplot
+fig2 = plt.figure(dpi=500)
+ax = fig2.add_subplot(
+    111, title="Influence of the signal noise uncertainties on the dust retrieval"
+)
+ax.set_xlabel("Signal noise deviation (DN)", fontsize=10)
+ax.set_ylabel("Dust optical depth deviation (%)", fontsize=10)
+ax.plot(surface_pressure, dust_con1_per, color="blue", label="(1) dust thin condition")
+ax.plot(surface_pressure, dust_con2_per, color="red", label="(2) dust thick condition")
+ax.plot(surface_pressure, dust_con3_per, color="black", label="(3) global dust storm period")
+h1, l1 = ax.get_legend_handles_labels()
+ax.legend(h1, l1, loc="upper left", fontsize=9)
+
+print('------------------------------------')
+print('BASE CONDITION')
+print('dev', surface_pressure[37])
+print('retreival dust (1): ',dust_thin[37])
+print('retreival dust (2): ',dust_DS[37])
+print('retreival dust (3): ',dust_GDS[37])
+print('------------------------------------')
+print('CONDITION (1)')
+print('dev', surface_pressure[0])
+print('-1.85 DN: ', dust_con1[0])
+print('-1.85 DN: ', dust_con1_per[0])
+print('retrieval dust: ', dust_thin[0])
+print('   ')
+print('dev', surface_pressure[74])
+print('+1.85 DN: ', dust_con1[74])
+print('+1.85 DN: ', dust_con1_per[74])
+print('retrieval dust: ', dust_thin[74])
+print('------------------------------------')
+print('CONDITION (2)')
+print('dev', surface_pressure[0])
+print('-1.85 DN: ', dust_con2[0])
+print('-1.85 DN: ', dust_con2_per[0])
+print('retrieval dust: ', dust_DS[0])
+print('   ')
+print('dev', surface_pressure[74])
+print('+50 Pa: ', dust_con2[74])
+print('+50 Pa: ', dust_con2_per[74])
+print('retrieval dust: ', dust_DS[74])
+print('------------------------------------')
+print('CONDITION (3)')
+print('dev', surface_pressure[0])
+print('-1.85 DN: ', dust_con3[0])
+print('-1.85 DN: ', dust_con3_per[0])
+print('retrieval dust: ', dust_GDS[0])
+print('   ')
+print('dev', surface_pressure[74])
+print('+1.85 DN: ', dust_con3[74])
+print('+1.85 DN: ', dust_con3_per[74])
+print('retrieval dust: ', dust_GDS[74])
+print('------------------------------------')
+# %%
+# Figure 2,7の3つのrandom errorの足し合わせを行ったものをここで評価
+# condition 1
+data_dir = pjoin(dirname(sio.__file__), "tests", "data")
+sav_fname1 = "/Users/nyonn/Desktop/論文/retrieval dust/2章：Describe the method/data/con1_all_result.sav"
+sav_data1 = readsav(sav_fname1)
+dust_thin = sav_data1["dust_result"]
+base_thin = dust_thin[10,50,37]
+
+dust_histo_1 = dust_thin.flatten()
+dust_histo_11 = dust_histo_1 - base_thin
+stev1 = np.std(dust_histo_11)
+
+# condition 2
+data_dir = pjoin(dirname(sio.__file__), "tests", "data")
+sav_fname2 = "/Users/nyonn/Desktop/論文/retrieval dust/2章：Describe the method/data/con2_all_result.sav"
+sav_data2 = readsav(sav_fname2)
+dust_DS = sav_data2["dust_result"]
+base_DS = dust_DS[10,50,37]
+
+dust_histo_2 = dust_DS.flatten()
+dust_histo_21 = dust_histo_2 - base_DS
+stev2 = np.std(dust_histo_21)
+
+# condition 3
+data_dir = pjoin(dirname(sio.__file__), "tests", "data")
+sav_fname3 = "/Users/nyonn/Desktop/論文/retrieval dust/2章：Describe the method/data/con3_all_result.sav"
+sav_data3 = readsav(sav_fname3)
+dust_GDS = sav_data3["dust_result"]
+base_GDS = dust_GDS[10,50,37]
+
+dust_histo_3 = dust_GDS.flatten()
+dust_histo_31 = dust_histo_3 - base_GDS
+stev3 = np.std(dust_histo_31)
+
+fig1 = plt.figure(dpi=500)
+ax = fig1.add_subplot(111, title="(a) dust thin condition")
+ax.set_xlabel("Dust optical depth deviation", fontsize=10)
+ax.set_ylabel("count", fontsize=10)
+ax.hist(dust_histo_11,bins=20,range=(-0.15,0.15),histtype='bar',color='blue',edgecolor="blue",alpha=0.3)
+ax.axvline(x=stev1,lw=2,color='blue')
+ax.axvline(x=-stev1,lw=2,color='blue')
+
+fig2 = plt.figure(dpi=500)
+ax = fig2.add_subplot(111, title="(b) dust thick condition")
+ax.set_xlabel("Dust optical depth deviation", fontsize=10)
+ax.set_ylabel("count", fontsize=10)
+ax.hist(dust_histo_21,bins=20,range=(-0.15,0.15),histtype='bar',color='red',edgecolor="red",alpha=0.3)
+ax.axvline(x=stev2,lw=2,color='red')
+ax.axvline(x=-stev2,lw=2,color='red')
+
+fig3 = plt.figure(dpi=500)
+ax = fig3.add_subplot(111, title="(c) global dust storm period")
+ax.set_xlabel("Dust optical depth deviation", fontsize=10)
+ax.set_ylabel("count", fontsize=10)
+ax.hist(dust_histo_31,bins=20,range=(-0.15,0.15),histtype='bar',color='black',edgecolor="black",alpha=0.3)
+ax.axvline(x=stev3,lw=2,color='black')
+ax.axvline(x=-stev3,lw=2,color='black')
+
+# %%
