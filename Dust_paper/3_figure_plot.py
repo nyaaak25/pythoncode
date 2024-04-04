@@ -18,14 +18,22 @@ sav_data = readsav(sav_fname)
 
 dust_277 = sav_data["dust_tau_277"]
 akira_result = dust_277 + 0
+
+# nan dataを除外する
+idx = ~np.isnan(dust_277)
+
+akira_result = dust_277 + 0
+akira_result = akira_result[idx]
+
 file_name = sav_data["file_name"]
 
 # Yann result
-yann_result = np.loadtxt("/Users/nyonn/Desktop/論文/retrieval dust/3章：Evaluate the method/data/tauMER_norm610Pa_for_MERsites.txt")
+MER_result = np.loadtxt("/Users/nyonn/Desktop/論文/retrieval dust/3章：Evaluate the method/data/tauMER_norm610Pa_for_MERsites.txt")
+MER_result = MER_result[idx]
 
 xerr = np.zeros(np.size(akira_result))
 
-coef = np.polyfit(akira_result, yann_result, 1)
+coef = np.polyfit(akira_result, MER_result, 1)
 cont0 = np.poly1d(coef)(akira_result)
 
 # ±10Kの不確定性
@@ -60,10 +68,18 @@ sav_data = readsav(sav_fname)
 
 dust_277 = sav_data["dust_tau_277"]
 akira_result = dust_277 + 0
+
+# nan dataを除外する
+idx = ~np.isnan(dust_277)
+
+akira_result = dust_277 + 0
+akira_result = akira_result[idx]
+
 file_name = sav_data["file_name"]
 
 # Yann result
 MER_result = np.loadtxt("/Users/nyonn/Desktop/論文/retrieval dust/3章：Evaluate the method/data/tauMER_norm610Pa_for_MERsites.txt")
+MER_result = MER_result[idx]
 
 xerr = np.zeros(np.size(akira_result))
 
@@ -103,10 +119,18 @@ sav_data = readsav(sav_fname)
 
 dust_277 = sav_data["dust_tau_277"]
 akira_result = dust_277 + 0
+
+# nan dataを除外する
+idx = ~np.isnan(dust_277)
+
+akira_result = dust_277 + 0
+akira_result = akira_result[idx]
+
 file_name = sav_data["file_name"]
 
 # Yann result
 yann_result = np.loadtxt("/Users/nyonn/Desktop/論文/retrieval dust/3章：Evaluate the method/data/yann_taudust_610Panormalised_for_MERsites_median_values.txt")
+yann_result = yann_result[idx]
 
 xerr = np.zeros(np.size(akira_result))
 
@@ -145,13 +169,20 @@ sav_fname = "/Users/nyonn/Desktop/論文/retrieval dust/3章：Evaluate the meth
 sav_data = readsav(sav_fname)
 
 dust_277 = sav_data["dust_tau_277"]
+# nan dataを除外する
+idx = ~np.isnan(dust_277)
+
 akira_result = dust_277 + 0
+akira_result = akira_result[idx]
+
 file_name = sav_data["file_name"]
 
 # Yann result
 yann_result = np.loadtxt(
     "/Users/nyonn/Desktop/論文/retrieval dust/3章：Evaluate the method/data/yann_taudust_610Panormalised_for_MERsites_median_values.txt"
 )
+
+yann_result = yann_result[idx]
 
 xerr = np.zeros(np.size(akira_result))
 
@@ -469,3 +500,53 @@ ax.set_ylabel("Dust optical depth using slope", fontsize=10)
 ax.errorbar(Akira_277, Mathieu_slope, xerr=xerr,capsize=5, fmt='o', markersize=5, ecolor='black', markeredgecolor = "black", color='w')
 ax.plot(Akira_277, appr,  color = 'black', lw=0.5, zorder=1)
 # %%
+# LSによって色がちがくなるようにplotしたもの
+# read the retrieval result
+data_dir = pjoin(dirname(sio.__file__), "tests", "data")
+sav_fname = "/Users/nyonn/Desktop/論文/retrieval dust/3章：Evaluate the method/data/MER_site_dust_nan.sav"
+sav_data = readsav(sav_fname)
+
+dust_277 = sav_data["dust_tau_277"]
+# nan dataを除外する
+idx = ~np.isnan(dust_277)
+
+akira_result = dust_277 + 0
+akira_result = akira_result[idx]
+
+file_name = sav_data["file_name"]
+LS = sav_data["ls_ind"]
+LS = LS[idx]
+
+# Yann result
+yann_result = np.loadtxt("/Users/nyonn/Desktop/論文/retrieval dust/3章：Evaluate the method/data/yann_taudust_610Panormalised_for_MERsites_median_values.txt")
+
+yann_result = yann_result[idx]
+
+xerr = np.zeros(np.size(akira_result))
+
+coef = np.polyfit(akira_result, yann_result, 1)
+cont0 = np.poly1d(coef)(akira_result)
+
+# ±10Kの不確定性
+# (1)では+10 Kのときに最大で203%の差が生じる
+ind1 = np.where(akira_result < 0.01)
+akira_result[akira_result == 0] = 0.000000000001
+xerr[ind1] = akira_result[ind1] * 2.03
+
+# (2)では-10 Kのときに最大で21%の差が生じる
+ind2 = np.where((akira_result < 0.5) & (akira_result >= 0.01))
+xerr[ind2] = akira_result[ind2] * 0.21
+
+# (3)では-10 Kのときに最大で-8.2%の差が生じる
+ind3 = np.where(akira_result >= 0.5)
+xerr[ind3] = akira_result[ind3] * 0.082
+
+fig = plt.figure(dpi=800)
+ax = fig.add_subplot(111, title="(b) Surface pressure uncertainties")
+ax.set_xlabel("Dust optical depth at 2.77 μm", fontsize=10)
+ax.set_ylabel("Dust optical depth using 2.0 μm", fontsize=10)
+scatter = ax.scatter(akira_result, yann_result, c=LS, cmap='viridis', zorder=3)
+ax.errorbar(akira_result, yann_result, xerr=xerr,capsize=5, fmt='o', markersize=5, ecolor='black', markeredgecolor = "black", color='w')
+cbar = plt.colorbar(scatter)
+cbar.set_label('LS variation')
+ax.plot(akira_result, cont0,  color = 'black', lw=0.5, zorder=1)
