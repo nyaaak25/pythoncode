@@ -13,6 +13,73 @@ import time
 from numba import jit, f8
 
 # %%
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(111)
+
+pressure = [100,350,600,850,1100,1350]
+pressure_label = ['SP=100 Pa','SP=350 Pa','SP=600 Pa','SP=850 Pa','SP=1100 Pa','SP=1350 Pa']
+
+
+for loop in range(2,3,1):
+          # ARSのスペクトルをここで定義する
+          ARS = np.loadtxt('/Users/nyonn/Desktop/LUTable_T1_260_T2_146_PRS' + str(pressure[loop]) + '.dat')
+          ARS_x = ARS[:, 0]
+          ARS_x = ARS_x[::-1]
+          ARS_wav = 1 / ARS_x
+          ARS_x = (1 / ARS_x) * 10000
+          ARS_y = ARS[:, 1]
+          ARS_y = ARS_y[::-1]
+          ARS_y = (ARS_y / (ARS_wav * ARS_wav)) * 1e-7
+
+          # OMEGA wave gridをここに置く
+          data_dir = pjoin(dirname(sio.__file__), "tests", "data")
+          sav_fname = "sav file/ORB0920_3.sav"
+          sav_data = readsav(sav_fname)
+          wvl = sav_data["wvl"]
+          wvl = wvl[128:255]
+          correct_wav_ind = np.where((wvl > 2.55) & (wvl < 3.45))
+          OMEGAcenter_list = wvl[correct_wav_ind]
+
+          OMEGAchannel = np.zeros(len(OMEGAcenter_list))
+
+          for k in range(len(OMEGAcenter_list)):
+                    # OMEGAの中心波長aについての GAUSSIANを定義
+                    mu = OMEGAcenter_list[k]
+                    # sig = 6.5e-3  # OMEGAの波長分解能は13nm
+                    sig = 6.5e-3
+
+                    # wav 1 ~ wav n までのガウシアンの値を求める
+                    C1 = np.where((ARS_x <= mu + 0.013) & (mu - 0.013 < ARS_x))
+                    new_wav = ARS_x[C1]
+                    GAUSSIAN_func = (1 / np.sqrt(2 * np.pi * (sig**2))) * np.exp(
+                    -((new_wav - mu) ** 2) / (2 * sig**2)
+                    )
+
+                    # ガウシアンと計算されたスペクトルをかけ合わせる
+                    new_I = ARS_y[C1]
+
+                    # GAUSSAINの場合
+                    multiple = GAUSSIAN_func * new_I
+
+                    # 畳み込みの台形近似で積分を行う
+                    S_conv = 0
+                    for i in range(len(new_wav) - 1):
+                              S_conv += ((multiple[i] + multiple[i + 1]) * (new_wav[i + 1] - new_wav[i])) / 2
+
+                    # ガウシアンの台形近似で積分を行う
+                    S_gauss = 0
+                    for j in range(len(new_wav) - 1):
+                              S_gauss += ((GAUSSIAN_func[j] + GAUSSIAN_func[j + 1]) * (new_wav[j + 1] - new_wav[j])) / 2
+
+                    # OMEGA channelに落とし込み
+                    OMEGAchannel[k] = S_conv / S_gauss
+          
+          ax.plot(OMEGAcenter_list, OMEGAchannel,label=str(pressure_label[loop]),zorder=loop,lw=3)
+          
+ax.set_ylim(0, 1.1)
+ax.set_xlim(2.65, 2.85)
+
+# %%
 # Retrieval errorの試算をするためのグラフ作成
 # 温度による依存性
 temp = [-10, 10]
