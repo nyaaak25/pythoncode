@@ -1,22 +1,5 @@
-data/
-not use file/
-not use py-file/
-sato-san file/
-secury/
-4545-5556_0.0001step_cutoff_120.txt
-ORB0006_1.sav
-LookUpTable_HTP/
-LookUpTable_Kw_old/
-Tau_file/
-LookUpTable_Q/
-spectrophy/
-sav file/
-LookUpTable_Kw/
-ARS_calc/
-TIPS_2021_PYTHON/
-QL_test/
-dust_ret/
-output/
-pres_ret/
-Ql_dust/
-
+old/
+SP/
+Dust/dust_ret/
+Dust/SH/HD/
+Dust/SH/D0/
