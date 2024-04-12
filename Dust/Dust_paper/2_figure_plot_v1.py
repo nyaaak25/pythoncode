@@ -7,6 +7,7 @@ from scipy.io import readsav
 import scipy.io as sio
 
 # %%
+# ------------------------------------- Figure 2.1 -------------------------------------
 # Dust paper fugure1 作成用のプログラム
 # Figure 1はOMEGA-like spectralを表示して、2.77 μmがどのように見えるかを示す
 # 2.77 μmのradianceを表示する
@@ -38,10 +39,9 @@ ax.legend(h1, l1, loc="upper left", fontsize=10)
 ax.axvline(x=ARS_x[5], color="black", linestyle="dashed")
 ax.set_ylim(0, 0.75)
 
-
-
 # %%
-# Figure 2.1bのシフト量のtime variationをplotする
+# ------------------------------------- Figure 2.2 -------------------------------------
+# Figure 2.2の放射輝度とダスト光学的厚さのプロット
 data_dir = pjoin(dirname(sio.__file__), "tests", "data")
 #sav_fname = "/Users/nyonn/Desktop/ORB4588_4.sav"
 sav_fname = "/Users/nyonn/Desktop/ORB1420_1.sav"
@@ -73,23 +73,14 @@ fig2.colorbar(c, ax=ax, orientation="vertical", label="Radiance")
 #plt.axis('equal')
 plt.show()
 
-fig3 = plt.figure(dpi=500)
-ax = fig3.add_subplot(111)
-ax.set_xlabel("Longitude", fontsize=10)
-ax.set_ylabel("Latitude", fontsize=10)
-ax.set_title("Altitude")
-c = ax.contourf(longitude, latitude, altitude, cmap="jet")
-fig3.colorbar(c, ax=ax, orientation="vertical", label="altitude")
-plt.axis('equal')
-plt.show()
-
 # %%
-# Figure 2,4-2,5を作成するプログラム
+# ------------------------------------- Figure 2.3 -------------------------------------
+# Figure 2.3を作成するプログラム
 data_dir = pjoin(dirname(sio.__file__), "tests", "data")
 
 # Temperature profile deviation
 # condition1を代入
-sav_fname1 = "/Users/nyonn/Desktop/con1_TA.sav"
+sav_fname1 = "/Users/nyonn/Desktop//論文/retrieval dust/2章：Describe the method/data/con1_TA.sav"
 sav_data1 = readsav(sav_fname1)
 temp = sav_data1["dev"]
 dust_thin = sav_data1["dust_result"]
@@ -97,14 +88,14 @@ dust_con1 = dust_thin - dust_thin[10]
 dust_con1_per = (dust_con1 * 100) / dust_thin[10]
 
 # condition2を代入
-sav_fname2 = "/Users/nyonn/Desktop/con2_TA.sav"
+sav_fname2 = "/Users/nyonn/Desktop//論文/retrieval dust/2章：Describe the method/data/con2_TA.sav"
 sav_data2 = readsav(sav_fname2)
 dust_DS = sav_data2["dust_result"]
 dust_con2 = dust_DS - dust_DS[10]
 dust_con2_per = (dust_con2 * 100) / dust_DS[10]
 
 # condition3を代入
-sav_fname3 = "/Users/nyonn/Desktop/con3_TA.sav"
+sav_fname3 = "/Users/nyonn/Desktop//論文/retrieval dust/2章：Describe the method/data/con3_TA.sav"
 sav_data3 = readsav(sav_fname3)
 dust_GDS = sav_data3["dust_result"]
 dust_con3 = dust_GDS - dust_GDS[10]
@@ -112,27 +103,30 @@ dust_con3_per = (dust_con3 * 100) / dust_GDS[10]
 
 # absolute valueのplot
 fig = plt.figure(dpi=500)
-ax = fig.add_subplot(
-    111, title="Influence of the Temperature profile uncertainties on the dust retrieval"
-)
-ax.set_xlabel("Temperature deviation (K)", fontsize=10)
-ax.set_ylabel("Dust optical depth deviation", fontsize=10)
-ax.plot(temp, dust_con1, color="blue", label="(1) dust thin condition")
-ax.plot(temp, dust_con2, color="red", label="(2) dust thick condition")
-ax.plot(temp, dust_con3, color="black", label="(3) global dust storm period")
+ax = fig.add_subplot(111)
+ax.set_xlabel("Temperature deviation (K)", fontsize=12)
+ax.set_ylabel("Dust optical depth deviation", fontsize=12)
+ax.scatter(temp, dust_con1, color="tan", label="(1) τ = 0.002",s=10)
+ax.scatter(temp, dust_con2, color="chocolate", label="(2) τ = 0.25",s=10)
+ax.scatter(temp, dust_con3, color="maroon", label="(3) τ = 0.7",s=10)
+ax.plot(temp, dust_con1, color="tan", alpha=0.5)
+ax.plot(temp, dust_con2, color="chocolate",alpha=0.5)
+ax.plot(temp, dust_con3, color="maroon",alpha=0.5)
 h1, l1 = ax.get_legend_handles_labels()
 ax.legend(h1, l1, loc="lower left", fontsize=9)
 
-# Relative valueのplot
+# そのままのplot
 fig2 = plt.figure(dpi=500)
-ax = fig2.add_subplot(
-    111, title="Influence of the Temperature profile uncertainties on the dust retrieval"
-)
-ax.set_xlabel("Temperature deviation (K)", fontsize=10)
-ax.set_ylabel("Dust optical depth deviation (%)", fontsize=10)
-ax.plot(temp, dust_con1_per, color="blue", label="(1) dust thin condition")
-ax.plot(temp, dust_con2_per, color="red", label="(2) dust thick condition")
-ax.plot(temp, dust_con3_per, color="black", label="(3) global dust storm period")
+ax = fig2.add_subplot(111)
+ax.set_xlabel("Temperature deviation (K)", fontsize=12)
+ax.set_ylabel("Dust optical depth", fontsize=12)
+ax.scatter(temp, dust_thin, color="tan", label="(1) τ = 0.002",s=10)
+ax.scatter(temp, dust_DS, color="chocolate", label="(2) τ = 0.25",s=10)
+ax.scatter(temp, dust_GDS, color="maroon", label="(3) τ = 0.7",s=10)
+ax.plot(temp, dust_thin, color="tan", alpha=0.5)
+ax.plot(temp, dust_DS, color="chocolate",alpha=0.5)
+ax.plot(temp, dust_GDS, color="maroon",alpha=0.5)
+ax.set_yscale('log')
 h1, l1 = ax.get_legend_handles_labels()
 ax.legend(h1, l1, loc="lower left", fontsize=9)
 
@@ -180,6 +174,7 @@ print('------------------------------------')
 
 
 # %%
+# ------------------------------------- Figure 2.4 -------------------------------------
 # Surface pressure deviation
 # condition1を代入
 sav_fname1 = "/Users/nyonn/Desktop/論文/retrieval dust/2章：Describe the method/data/con1_SP.sav"
