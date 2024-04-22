@@ -13,7 +13,8 @@ Dust_exp = np.loadtxt("/Users/nyonn/Desktop/pythoncode/Dust/SH/dust_2500_8500.ae
 # 波数3601のデータを取得
 #Dust_ext = Dust_exp[1101,1] # 2.77 μm
 #Dust_ext = Dust_exp[2472,1] # 2.01 μm
-Dust_ext = Dust_exp[2961,1] # 1.82 μm
+#Dust_ext = Dust_exp[2961,1] # 1.82 μm
+Dust_ext = Dust_exp[2063,1] # 2.19 μm
 
 # μmをcmに変換s
 Dust_ext = Dust_ext * 1e-3
@@ -31,7 +32,7 @@ altitude = HD_base[:,0]
 # dust_number_density_profile = HD_base[:,1]
 
 # 数密度データを読み込む
-ground_nd = 0.8
+ground_nd = 8
 dust_number_density_profile = np.zeros(len(altitude))
 for i in range(len(altitude)):
     dust_number_density_profile[i] = ground_nd * np.exp(-altitude[i]/10) # scale height = 10 km
@@ -47,6 +48,6 @@ plt.scatter(dust_number_density_profile, altitude, label="Dust Number Density", 
 # 2d.hcは1d.hcの約10倍のDust opacityで作成
 # 3d.hcは1d.hcの約1/10倍のDust opacityで作成
 save_data = np.column_stack((altitude, dust_number_density_profile))
-np.savetxt("/Users/nyonn/Desktop/pythoncode/Dust/SH/input_hc/3dd_before.hc", save_data)
+np.savetxt("/Users/nyonn/Desktop/pythoncode/Dust/SH/input_hc/1dd_after.hc", save_data)
 
 # %%
