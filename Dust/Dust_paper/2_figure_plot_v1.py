@@ -43,8 +43,7 @@ ax.set_ylim(0, 0.75)
 # ------------------------------------- Figure 2.2 -------------------------------------
 # Figure 2.2の放射輝度とダスト光学的厚さのプロット
 data_dir = pjoin(dirname(sio.__file__), "tests", "data")
-#sav_fname = "/Users/nyonn/Desktop/ORB4588_4.sav"
-sav_fname = "/Users/nyonn/Desktop/ORB1420_1.sav"
+sav_fname = "/Users/nyonn/Desktop//論文/retrieval dust/2章：Describe the method/data/ORB1212_3.sav"
 sav_data = readsav(sav_fname)
 longitude = sav_data["longi"]
 latitude = sav_data["lati"]
@@ -52,24 +51,30 @@ new_radiance = sav_data["new_rad"]
 dust_opacity = sav_data["dust_opacity"]
 altitude = sav_data["ret_alt_dust"]
 
+dust_opacity = dust_opacity + 0
+
+ind = np.where(dust_opacity <= 0)
+dust_opacity[ind] = np.nan
+
 fig = plt.figure(dpi=500)
 ax = fig.add_subplot(111)
-ax.set_xlabel("Longitude", fontsize=10)
-ax.set_ylabel("Latitude", fontsize=10)
-ax.set_title("Retrieval dust opacity at 2.77 μm")
-c = ax.contourf(longitude, latitude, dust_opacity, cmap="jet")
-fig.colorbar(c, ax=ax, orientation="vertical", label="Dust opacity")
-plt.axis('equal')
+ax.set_xlabel("Longitude", fontsize=14)
+ax.set_ylabel("Latitude", fontsize=14)
+ax.set_title("Retrieval dust optical depth at 2.77 μm", fontsize=14)
+c = ax.contourf(longitude, latitude, dust_opacity, cmap="jet",vmin=0)
+cbar = fig.colorbar(c, ax=ax, orientation="vertical")
+cbar.set_label("Dust optical depth", fontsize=12)
+#plt.axis('equal')
 plt.show()
 
 fig2 = plt.figure(dpi=500)
 ax = fig2.add_subplot(111)
-ax.set_xlabel("Longitude", fontsize=10)
-ax.set_ylabel("Latitude", fontsize=10)
-ax.set_title("Radiance at 2.77 μm")
-ax.set_xlim(95, 100)
-c = ax.contourf(longitude, latitude, new_radiance, cmap="jet",vmax=0.18,vmin=0.0)
-fig2.colorbar(c, ax=ax, orientation="vertical", label="Radiance")
+ax.set_xlabel("Longitude", fontsize=14)
+ax.set_ylabel("Latitude", fontsize=14)
+ax.set_title("Radiance at 2.77 μm", fontsize=14)
+c = ax.contourf(longitude, latitude, new_radiance, cmap="jet",vmin=0)
+cbar2 = fig2.colorbar(c, ax=ax, orientation="vertical")
+cbar2.set_label("Radiance", fontsize=12)
 #plt.axis('equal')
 plt.show()
 
@@ -126,7 +131,7 @@ ax.scatter(temp, dust_GDS, color="maroon", label="(3) τ = 0.7",s=10)
 ax.plot(temp, dust_thin, color="tan", alpha=0.5)
 ax.plot(temp, dust_DS, color="chocolate",alpha=0.5)
 ax.plot(temp, dust_GDS, color="maroon",alpha=0.5)
-ax.set_yscale('log')
+#ax.set_yscale('log')
 h1, l1 = ax.get_legend_handles_labels()
 ax.legend(h1, l1, loc="lower left", fontsize=9)
 
@@ -200,27 +205,30 @@ dust_con3_per = (dust_con3 * 100) / dust_GDS[50]
 
 # absolute valueのplot
 fig = plt.figure(dpi=500)
-ax = fig.add_subplot(
-    111, title="Influence of the surface pressure uncertainties on the dust retrieval"
-)
-ax.set_xlabel("Surface pressure deviation (Pa)", fontsize=10)
-ax.set_ylabel("Dust optical depth deviation", fontsize=10)
-ax.plot(surface_pressure, dust_con1, color="blue", label="(1) dust thin condition")
-ax.plot(surface_pressure, dust_con2, color="red", label="(2) dust thick condition")
-ax.plot(surface_pressure, dust_con3, color="black", label="(3) global dust storm period")
+ax = fig.add_subplot(111)
+ax.set_xlabel("Surface pressure deviation (Pa)", fontsize=12)
+ax.set_ylabel("Dust optical depth deviation", fontsize=12)
+ax.scatter(surface_pressure, dust_con1, color="tan", label="(1) τ = 0.002",s=2)
+ax.scatter(surface_pressure, dust_con2, color="chocolate", label="(2) τ = 0.25",s=2)
+ax.scatter(surface_pressure, dust_con3, color="maroon", label="(3) τ = 0.7",s=2)
+ax.plot(surface_pressure, dust_con1, color="tan", alpha=0.5)
+ax.plot(surface_pressure, dust_con2, color="chocolate", alpha=0.5)
+ax.plot(surface_pressure, dust_con3, color="maroon", alpha=0.5)
 h1, l1 = ax.get_legend_handles_labels()
 ax.legend(h1, l1, loc="lower right", fontsize=9)
 
 # Relative valueのplot
 fig2 = plt.figure(dpi=500)
-ax = fig2.add_subplot(
-    111, title="Influence of the surface pressure uncertainties on the dust retrieval"
-)
+ax = fig2.add_subplot(111)
 ax.set_xlabel("Surface pressure deviation (Pa)", fontsize=10)
-ax.set_ylabel("Dust optical depth deviation (%)", fontsize=10)
-ax.plot(surface_pressure, dust_con1_per, color="blue", label="(1) dust thin condition")
-ax.plot(surface_pressure, dust_con2_per, color="red", label="(2) dust thick condition")
-ax.plot(surface_pressure, dust_con3_per, color="black", label="(3) global dust storm period")
+ax.set_ylabel("Dust optical depth", fontsize=10)
+ax.scatter(surface_pressure, dust_thin, color="tan", label="(1) τ = 0.002",s=2)
+ax.scatter(surface_pressure, dust_DS, color="chocolate", label="(2) τ = 0.25",s=2)
+ax.scatter(surface_pressure, dust_GDS, color="maroon", label="(3) τ = 0.7",s=2)
+ax.plot(surface_pressure, dust_thin, color="tan", alpha=0.5)
+ax.plot(surface_pressure, dust_DS, color="chocolate",alpha=0.5)
+ax.plot(surface_pressure, dust_GDS, color="maroon",alpha=0.5)
+#ax.set_yscale('log')
 h1, l1 = ax.get_legend_handles_labels()
 ax.legend(h1, l1, loc="lower right", fontsize=9)
 
@@ -266,6 +274,7 @@ print('retrieval dust: ', dust_GDS[100])
 print('------------------------------------')
 
 # %%
+# ------------------------------------- Figure 2.5 -------------------------------------
 # radiance variation
 # condition1を代入
 data_dir = pjoin(dirname(sio.__file__), "tests", "data")
@@ -293,27 +302,30 @@ dust_con3_per = (dust_con3 * 100) / dust_GDS[37]
 
 # absolute valueのplot
 fig = plt.figure(dpi=500)
-ax = fig.add_subplot(
-    111, title="Influence of the signal noise uncertainties on the dust retrieval"
-)
-ax.set_xlabel("Signal noize deviation (DN)", fontsize=10)
-ax.set_ylabel("Dust optical depth deviation", fontsize=10)
-ax.plot(surface_pressure, dust_con1, color="blue", label="(1) dust thin condition")
-ax.plot(surface_pressure, dust_con2, color="red", label="(2) dust thick condition")
-ax.plot(surface_pressure, dust_con3, color="black", label="(3) global dust storm period")
+ax = fig.add_subplot(111)
+ax.set_xlabel("Signal noize deviation (DN)", fontsize=12)
+ax.set_ylabel("Dust optical depth deviation", fontsize=12)
+ax.scatter(surface_pressure, dust_con1, color="tan", label="(1) τ = 0.002",s=2)
+ax.scatter(surface_pressure, dust_con2, color="chocolate", label="(2) τ = 0.25",s=2)
+ax.scatter(surface_pressure, dust_con3, color="maroon", label="(3) τ = 0.7",s=2)
+ax.plot(surface_pressure, dust_con1, color="tan", alpha=0.5)
+ax.plot(surface_pressure, dust_con2, color="chocolate", alpha=0.5)
+ax.plot(surface_pressure, dust_con3, color="maroon", alpha=0.5)
 h1, l1 = ax.get_legend_handles_labels()
 ax.legend(h1, l1, loc="lower right", fontsize=9)
 
 # Relative valueのplot
 fig2 = plt.figure(dpi=500)
-ax = fig2.add_subplot(
-    111, title="Influence of the signal noise uncertainties on the dust retrieval"
-)
-ax.set_xlabel("Signal noise deviation (DN)", fontsize=10)
-ax.set_ylabel("Dust optical depth deviation (%)", fontsize=10)
-ax.plot(surface_pressure, dust_con1_per, color="blue", label="(1) dust thin condition")
-ax.plot(surface_pressure, dust_con2_per, color="red", label="(2) dust thick condition")
-ax.plot(surface_pressure, dust_con3_per, color="black", label="(3) global dust storm period")
+ax = fig2.add_subplot(111)
+ax.set_xlabel("Signal noise deviation (DN)", fontsize=12)
+ax.set_ylabel("Dust optical depth", fontsize=12)
+ax.scatter(surface_pressure, dust_thin, color="tan", label="(1) τ = 0.002",s=2)
+ax.scatter(surface_pressure, dust_DS, color="chocolate", label="(2) τ = 0.25",s=2)
+ax.scatter(surface_pressure, dust_GDS, color="maroon", label="(3) τ = 0.7",s=2)
+ax.plot(surface_pressure, dust_thin, color="tan", alpha=0.5)
+ax.plot(surface_pressure, dust_DS, color="chocolate",alpha=0.5)
+ax.plot(surface_pressure, dust_GDS, color="maroon",alpha=0.5)
+#ax.set_yscale('log')
 h1, l1 = ax.get_legend_handles_labels()
 ax.legend(h1, l1, loc="upper left", fontsize=9)
 
@@ -358,6 +370,7 @@ print('+1.85 DN: ', dust_con3_per[74])
 print('retrieval dust: ', dust_GDS[74])
 print('------------------------------------')
 # %%
+# ------------------------------------- Figure 2.6 -------------------------------------
 # Figure 2,7の3つのrandom errorの足し合わせを行ったものをここで評価
 # condition 1
 data_dir = pjoin(dirname(sio.__file__), "tests", "data")
@@ -367,7 +380,7 @@ dust_thin = sav_data1["dust_result"]
 base_thin = dust_thin[10,50,37]
 
 dust_histo_1 = dust_thin.flatten()
-dust_histo_11 = dust_histo_1 - base_thin
+dust_histo_11 = dust_histo_1 #- base_thin
 stev1 = np.std(dust_histo_11)
 
 # condition 2
@@ -378,7 +391,7 @@ dust_DS = sav_data2["dust_result"]
 base_DS = dust_DS[10,50,37]
 
 dust_histo_2 = dust_DS.flatten()
-dust_histo_21 = dust_histo_2 - base_DS
+dust_histo_21 = dust_histo_2 #- base_DS
 stev2 = np.std(dust_histo_21)
 
 # condition 3
@@ -389,31 +402,31 @@ dust_GDS = sav_data3["dust_result"]
 base_GDS = dust_GDS[10,50,37]
 
 dust_histo_3 = dust_GDS.flatten()
-dust_histo_31 = dust_histo_3 - base_GDS
+dust_histo_31 = dust_histo_3 #- base_GDS
 stev3 = np.std(dust_histo_31)
 
 fig1 = plt.figure(dpi=500)
-ax = fig1.add_subplot(111, title="(a) dust thin condition")
-ax.set_xlabel("Dust optical depth deviation", fontsize=10)
-ax.set_ylabel("count", fontsize=10)
-ax.hist(dust_histo_11,bins=20,range=(-0.15,0.15),histtype='bar',color='blue',edgecolor="blue",alpha=0.3)
-ax.axvline(x=stev1,lw=2,color='blue')
-ax.axvline(x=-stev1,lw=2,color='blue')
+ax = fig1.add_subplot(111)
+ax.set_xlabel("Dust optical depth", fontsize=12)
+ax.set_ylabel("count", fontsize=12)
+ax.hist(dust_histo_11,bins=20,histtype='bar',range=[-0.032,0.10],color='tan',edgecolor="tan",alpha=0.3)
+ax.axvline(x=base_thin + stev1,lw=2,color='tan')
+ax.axvline(x=base_thin-stev1,lw=2,color='tan')
 
 fig2 = plt.figure(dpi=500)
-ax = fig2.add_subplot(111, title="(b) dust thick condition")
-ax.set_xlabel("Dust optical depth deviation", fontsize=10)
-ax.set_ylabel("count", fontsize=10)
-ax.hist(dust_histo_21,bins=20,range=(-0.15,0.15),histtype='bar',color='red',edgecolor="red",alpha=0.3)
-ax.axvline(x=stev2,lw=2,color='red')
-ax.axvline(x=-stev2,lw=2,color='red')
+ax = fig2.add_subplot(111)
+ax.set_xlabel("Dust optical depth", fontsize=12)
+ax.set_ylabel("count", fontsize=12)
+ax.hist(dust_histo_21,bins=20,histtype='bar',range=[0.15,0.37],color="chocolate",edgecolor="chocolate",alpha=0.3)
+ax.axvline(x=base_DS + stev2,lw=2,color="chocolate")
+ax.axvline(x=base_DS - stev2,lw=2,color="chocolate")
 
 fig3 = plt.figure(dpi=500)
-ax = fig3.add_subplot(111, title="(c) global dust storm period")
-ax.set_xlabel("Dust optical depth deviation", fontsize=10)
-ax.set_ylabel("count", fontsize=10)
-ax.hist(dust_histo_31,bins=20,range=(-0.15,0.15),histtype='bar',color='black',edgecolor="black",alpha=0.3)
-ax.axvline(x=stev3,lw=2,color='black')
-ax.axvline(x=-stev3,lw=2,color='black')
+ax = fig3.add_subplot(111)
+ax.set_xlabel("Dust optical depth", fontsize=12)
+ax.set_ylabel("count", fontsize=12)
+ax.hist(dust_histo_31,bins=20,histtype='bar',range=[0.58,0.83],color="maroon",edgecolor="maroon",alpha=0.3)
+ax.axvline(x=stev3 + base_GDS,lw=2,color="maroon")
+ax.axvline(x=base_GDS - stev3,lw=2,color="maroon")
 
 # %%
