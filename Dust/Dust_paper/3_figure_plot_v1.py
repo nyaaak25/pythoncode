@@ -5,9 +5,72 @@ import matplotlib.pyplot as plt
 from os.path import dirname, join as pjoin
 from scipy.io import readsav
 import scipy.io as sio
+from matplotlib.colors import Normalize
+from matplotlib.cm import ScalarMappable
 
 # %%
 # -------------------------------------- Figure 3.1 --------------------------------------
+all_data = readsav("/Users/nyonn/Desktop/論文/retrieval dust/3章：Evaluate the method/data/dust_seasonal.sav")
+dust_color = all_data["dust_color"]
+lat_ind = all_data["lat_ind"]
+Ls_ind = all_data["Ls_ind"]
+
+zero = np.where(dust_color == 0)
+dust_color = dust_color + 0
+dust_color[zero] = np.nan
+
+ind_zero = np.where(Ls_ind == 0)
+ind_good = np.where(Ls_ind > 0)
+Ls_ind = Ls_ind + 0
+Ls_ind[ind_zero] = np.nan
+
+Ls_good = Ls_ind[ind_good]
+dust_good = dust_color[:,ind_good]
+count = np.size(Ls_good)
+derease_indices_all = np.where(np.diff(Ls_good) < 0)[0]
+
+# color mapの設定
+min_dust = 0.01
+max_dust = 0.6
+cmap = plt.get_cmap('jet')
+
+norm = Normalize(vmin=min_dust, vmax=max_dust)
+sm = ScalarMappable(cmap=cmap, norm=norm)
+sm.set_array([])
+
+# プロットをする
+fig,axs = plt.subplots(3,1,dpi=800, figsize=(25, 15))
+axs[0].set_title("MY27", fontsize=30)
+axs[0].set_ylabel("Latitude [deg]", fontsize=20)
+axs[0].set_ylim(-90, 90)
+
+for i in range(derease_indices_all[0], derease_indices_all[1], 1):
+    color = sm.to_rgba(dust_good[:,0,i])
+    LS_plt = np.repeat(Ls_good[i], len(lat_ind))
+    axs[0].scatter(LS_plt, lat_ind, c=color, cmap="viridis", s=1, zorder=3)
+
+axs[1].set_title("MY28", fontsize=30)
+axs[1].set_ylabel("Latitude [deg]", fontsize=20)
+axs[1].set_ylim(-90, 90)
+
+for i in range(derease_indices_all[1], derease_indices_all[2], 1):
+    color = sm.to_rgba(dust_good[:,0,i])
+    LS_plt = np.repeat(Ls_good[i], len(lat_ind))
+    axs[1].scatter(LS_plt, lat_ind, c=color, cmap="viridis", s=1, zorder=3)
+
+axs[2].set_title("MY29", fontsize=30)
+axs[2].set_ylabel("Latitude [deg]", fontsize=20)
+axs[2].set_xlabel("Solar Longitude [deg]", fontsize=25)
+axs[2].set_xlim(0, 360)
+axs[2].set_ylim(-90, 90)
+
+for i in range(derease_indices_all[2], count-1 ,1):
+    color = sm.to_rgba(dust_good[:,0,i])
+    LS_plt = np.repeat(Ls_good[i], len(lat_ind))
+    axs[2].scatter(LS_plt, lat_ind, c=color, cmap="viridis", s=1, zorder=3)
+
+cbar = plt.colorbar(sm,ax=axs.ravel().tolist(),orientation='vertical',aspect=90)
+cbar.set_label("Dust optical depth at 2.77 μm", fontsize=20)
 
 
 # %%
@@ -19,13 +82,18 @@ sav_data = readsav(sav_fname)
 
 com_data = sav_data["corre_two"]
 Akira_277 = com_data[0,:] + 0
-Mathieu_slope = com_data[1,:]
+Mathieu_slope = com_data[1,:] + 0
 
 xerr = np.zeros(np.size(Akira_277))
 
+# zeroの場所を探して、nanを入れる
+ind_zero = np.where(Akira_277 == 0)
+Akira_277[ind_zero] = np.nan
+Mathieu_slope[ind_zero] = np.nan
+
 # Total errorは(1)で0.032
 ind1 = np.where(Akira_277 < 0.01)
-Akira_277[Akira_277 == 0] = 0.000000000001
+#Akira_277[Akira_277 == 0] = 0.000000000001
 xerr[ind1] = 0.032
 
 # Total errorは(2)で0.034
@@ -40,6 +108,8 @@ xerr[ind3] = 0.040
 coef=np.polyfit(Akira_277, Mathieu_slope, 1)
 appr = np.poly1d(coef)(Akira_277)
 
+# 理想的な線を書く
+ideal_corr = Akira_277 * 2.65
 
 fig = plt.figure(dpi=800)
 ax = fig.add_subplot(111)
@@ -47,6 +117,7 @@ ax.set_xlabel("Dust optical depth using 2.77 μm", fontsize=10)
 ax.set_ylabel("Dust optical depth using slope", fontsize=10)
 ax.errorbar(Akira_277, Mathieu_slope, xerr=xerr,capsize=5, fmt='o', markersize=5, ecolor='black', markeredgecolor = "black", color='w')
 ax.plot(Akira_277, appr,  color = 'black', lw=0.5, zorder=1)
+ax.plot(Akira_277, ideal_corr,  color = 'red', lw=0.5, zorder=1)
 
 # %%
 # -------------------------------------- Figure 3.3 --------------------------------------
