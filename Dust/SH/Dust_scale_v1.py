@@ -365,7 +365,54 @@ for loop in range(0, 1, 1):
 ax.legend()
 #ax.grid()
 
+# %%
+# -------------------- Figure 3.6 --------------------
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+Dust_list = ["τ=0.35", "τ=3.5", "τ=0.035"]
+color_list = ["black", "orange", "green"]
+linestyle = ["-", "--", "-."]
+
+fig = plt.figure(dpi=800)
+ax = fig.add_subplot(111)
+ax.set_title("Dust Weighting Function", fontsize=16)
+ax.set_ylabel("Altitude [km]", fontsize=16)
+ax.set_ylim(0, 70)
+ax.set_xlim(0, 1.05)
+
+# 2.7 μmのプロット
+for loop in range(0, 3, 1):
+    ORG_base = np.loadtxt("/Users/nyonn/Desktop/pythoncode/Dust/SH/output/ORG/ORG_D" +str(loop)+ "_rad.dat")
+    ORG_wave = ORG_base[0]
+    ORG_wav = 1 / ORG_wave
+    ORG_wave = (1 / ORG_wave) * 10000
+
+    ORG_rad = ORG_base[1]
+    ORG_rad = (ORG_rad / (ORG_wav**2)) * 1e-7
+
+    # Baseの高度をここに入れる
+    HD_base = np.loadtxt("/Users/nyonn/Desktop/pythoncode/Dust/SH/input_hc/" +str(loop+1)+ "d.hc")
+    altitude = HD_base[:,0]
+    orginal = HD_base[:,1]
+
+    new_opacity = np.zeros(len(altitude))
+
+    # Dust profileを変えたときのもの
+    for i in range(0,60,1):
+        HD = np.loadtxt("/Users/nyonn/Desktop/pythoncode/Dust/SH/output/D" +str(loop)+ "/" + str(i) + "_rad.dat")
+        rad = HD[1]
+        rad = (rad / (ORG_wav**2)) * 1e-7
+        new_opacity[i] = (rad - ORG_rad) * (orginal[i] /np.max(orginal))
+
+    normarize = new_opacity / np.max(new_opacity)
+    # normarizeをsmoothingする
+    for i in range(1, len(normarize)-1, 1):
+        normarize[i] = (normarize[i-1] + normarize[i] + normarize[i+1]) / 3
+    ax.plot(normarize, altitude, label=Dust_list[loop], color='black', linestyle=linestyle[loop])
 
 
-
+ax.legend()
+#ax.grid()
 # %%

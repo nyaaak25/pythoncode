@@ -746,11 +746,11 @@ plt.show()
 # %%    
 # ------------------------------------- Figure 4.3 -------------------------------------
 # MY27-29のLDSの分布を作成する
-all_data = readsav("/Users/nyonn/Desktop/論文/retrieval dust/4章：Analysis of OMEGA data set/data/ALL_EW_detect_lon-lat.sav")
+all_data = readsav("/Users/nyonn/Desktop/論文/retrieval dust/old/4章：Analysis of OMEGA data set/data/ALL_EW_detect_lon-lat.sav")
 ALL_info = all_data['detect_number']
 
 # observation dataを読み込む
-OBS_data = readsav("/Users/nyonn/Desktop/論文/retrieval dust/4章：Analysis of OMEGA data set/data/EW_detect_lon-lat.sav")
+OBS_data = readsav("/Users/nyonn/Desktop/論文/retrieval dust/old/4章：Analysis of OMEGA data set/data/EW_detect_lon-lat.sav")
 OBS_info = OBS_data['detect_number']
 
 # データを転置する
@@ -1136,3 +1136,48 @@ cbar.set_label("Dust optical depth", fontsize=20)
 
 plt.show()
 # %%
+# ダストの分布をLTごとに示す
+data = readsav("/Users/nyonn/Desktop/論文/retrieval dust/4章：Analysis of OMEGA data set/data/histo_info.sav")
+
+# dust optical depth
+min_dust = 0.15
+max_dust = 0.4
+cmap = plt.get_cmap('jet')
+
+norm2 = Normalize(vmin=min_dust, vmax=max_dust)
+sm2 = ScalarMappable(cmap=cmap, norm=norm2)
+sm2.set_array([])
+
+# データを取り出す
+OBS_ls = data['obs_Ls_ind']
+OBS_lt = data['obs_lt_ind']
+OBS_lat = data['obs_lat_ind']
+OBS_lon = data['obs_lon_ind']
+OBS_dust = data['obs_dust_ind']
+file_orbit = data['files_info']
+
+for i in range(8,18,1):
+          min_lt = i
+          max_lt = i+1
+
+          ind_lt = np.where((OBS_lt >= min_lt) & (OBS_lt < max_lt))
+          lt_lat = OBS_lat[ind_lt]
+          lt_lon = OBS_lon[ind_lt]
+          dust_color = OBS_dust[ind_lt]
+
+          fig = plt.figure(dpi=800)
+          ax = fig.add_subplot(111)
+          ax.set_title("LDS map: LT" + str(min_lt) + " - " + str(max_lt))
+          ax.set_xlabel("Longitude [Deg]", fontsize=14)
+          ax.set_ylabel("Latitude [Deg]", fontsize=14)
+          ax.set_xlim(-5, 365)
+          ax.set_ylim(-60, 60)
+
+          color = sm2.to_rgba(dust_color)
+          ax.scatter(lt_lon,lt_lat,s=7,color=color)
+
+          cbar = plt.colorbar(sm2,orientation='vertical')
+          cbar.set_label("Dust optical depth", fontsize=7)
+
+          if i == 16:
+                    print(file_orbit[ind_lt])

@@ -9,7 +9,7 @@ import os
 def filesearch(dir):
     # 指定されたディレクトリ内の全てのファイルを取得
     # path_list = glob.glob("LookUpTable_HTP/*.txt")
-    path_list = glob.glob("dust_ret/LUT_HTP/*.txt")
+    path_list = glob.glob("/Users/nyonn/Desktop/pythoncode/Dust/dust_ret/HTP_yann_profile.txt")
     name_list = []                          # ファイル名の空リストを定義
 
     # ファイルのフルパスからファイル名と拡張子を抽出
@@ -28,7 +28,7 @@ for i in range(len(name_list)):
     T_nyon = pd.read_fwf(
         str(path_list[i]), header=None)
     Q_CO2 = pd.read_csv(
-        'QCO2.csv', header=None, delimiter=',')
+        '/Users/nyonn/Desktop/pythoncode/Soft/QCO2.csv', header=None, delimiter=',')
 
     T_nyon.set_axis(['height', 'Pressure', 'Tempreture'], axis=1, inplace=True)
     Q_CO2.set_axis(['Tempreture', 'Q'], axis=1, inplace=True)
@@ -39,11 +39,12 @@ for i in range(len(name_list)):
     # データをがっちゃんこ
     QplusT = pd.merge(T_nyon, Q_CO2, on='Tempreture', how='inner')
     # print(QplusT)
-    # %%
     # データの指定
     # QplusT.to_csv('LookUpTable_Q/'+str(name_list[i])+'.csv',
     #              columns=['Tempreture', 'Q'], index=False)
-    QplusT.to_csv('dust_ret/LUT_Q/'+str(name_list[i])+'.csv',
+    #QplusT.to_csv('dust_ret/LUT_Q/'+str(name_list[i])+'.csv',
+    #              columns=['Tempreture', 'Q'], index=False)
+    QplusT.to_csv('/Users/nyonn/Desktop/pythoncode/Dust/dust_ret/' + str(name_list[i])+'.csv',
                   columns=['Tempreture', 'Q'], index=False)
 
 
