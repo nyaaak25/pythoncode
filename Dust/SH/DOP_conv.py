@@ -16,7 +16,7 @@ Dust_exp = np.loadtxt("/Users/nyonn/Desktop/pythoncode/Dust/SH/dust_2500_8500.ae
 #Dust_ext = Dust_exp[2961,1] # 1.82 μm
 Dust_ext = Dust_exp[2063,1] # 2.19 μm
 
-# μmをcmに変換s
+# μmをcmに変換
 Dust_ext = Dust_ext * 1e-3
 # μm → mに直したのちにkmに変換
 # もともとのunitはμm2, 数密度はcm-3

@@ -8,14 +8,36 @@ from scipy.io import readsav
 import scipy.io as sio
 from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
+# %%
+# バグを発見するためのプログラム
+# look up tableの値
+dust = [0, 0.3, 0.6, 0.9, 1.2]
+SP = [100, 350, 600, 850, 1100, 1350]
+EA = [0, 5, 10, 30]
+SZA = [0, 15, 30, 45, 60, 75]
+TA = [160, 213, 260, 285]
+TB = [100, 146, 200]
+index = [5, 4, 6, 3, 4, 6]
 
-for loop in range(11,12):
+# loopは17まで指定可能
+for loop in range(0,17):
+          all_data_lut = readsav("/Users/nyonn/Desktop/pythoncode/Dust/evaluate/old lut/Table_dust_calc_" + str(loop) + ".sav")
+          table_data = all_data_lut["Table_Equivalent_dust"]
+
+          fig2, ax2 = plt.subplots()
+          ax2.set_title("dependence on Temp", fontsize=16)
+          ax2.scatter(TA, table_data[1,1,1,1,:,1])
+                                                  
+
+
+# %%
+for loop in range(0,17):
           # ファイルの読み込み
           all_data_12 = readsav("/Users/nyonn/Desktop/pythoncode/Dust/evaluate/lut/Table_dust_calc_" + str(loop) + ".sav")
           table_12 = all_data_12["Table_Equivalent_dust"]
 
-          all_data_13 = readsav("/Users/nyonn/Desktop/pythoncode/Dust/evaluate/old lut/Table_dust_calc_" + str(loop) + ".sav")
-          table_13 = all_data_13["Table_Equivalent_dust"]
+          #all_data_13 = readsav("/Users/nyonn/Desktop/pythoncode/Dust/evaluate/1/Table_dust_calc_" + str(loop) + ".sav")
+          #table_13 = all_data_13["Table_Equivalent_dust"]
 
           dust = [0, 0.3, 0.6, 0.9, 1.2]
           SP = [100, 350, 600, 850, 1100, 1350]
@@ -26,29 +48,33 @@ for loop in range(11,12):
           index = [5, 4, 6, 3, 4, 6]
 
           fig, ax = plt.subplots()
-          ax.set_title("OLD look up table", fontsize=16)
+          ax.set_title("corr minus", fontsize=16)
 
           fig2, ax2 = plt.subplots()
-          ax2.set_title("NEW look up table", fontsize=16)
+          ax2.set_title("corr plus", fontsize=16)
 
-          # dust plot
-          # plotをしてみる
+          for i_1 in range(1,2):
+                    for i_2 in range(1,2):
+                              for i_3 in range(1,2):
+                                        for i_4 in range(0,3):
+                                                  for i_5 in range(1,2):
+    
 
-          for i_1 in range(0,6):
-                    for i_2 in range(0,4):
-                              for i_3 in range(0,3):
-                                        for i_4 in range(0,6):
-                                                  for i_5 in range(0,4):
+                                                            fig, ax1 = plt.subplots()
+                                                            ax1.set_title("relation", fontsize=16)
+                                                            #ax1.scatter(dust,table_13[:,i_5,i_4,i_3,i_2,i_1])
+                                                            ax1.scatter(dust,table_12[:,i_5,i_4,i_3,i_2,i_1])
                                                             #ax.plot(table_12[:,i_5,i_4,i_3,i_2,i_1],table_13[:,i_5,i_4,i_3,i_2,i_1])
 
                                                             # table_12とtable_13の値の相関関係を撮ってみる
-                                                            corr = np.corrcoef(table_12[:,i_5,i_4,i_3,i_2,i_1],table_13[:,i_5,i_4,i_3,i_2,i_1])
+                                                            #corr = np.corrcoef(table_12[:,i_5,i_4,i_3,i_2,i_1],table_13[:,i_5,i_4,i_3,i_2,i_1])
 
-                                                            if corr[0,1] < 0.0:
+                                                            #if corr[0,1] < 0.0:
                                                                       #print(i_1,i_2,i_3,i_4,i_5)
-                                                                      ax2.plot(table_12[:,i_5,i_4,i_3,i_2,i_1],table_13[:,i_5,i_4,i_3,i_2,i_1])
-                                                            if corr[0,1] > 0.0:
-                                                                      ax.plot(table_12[:,i_5,i_4,i_3,i_2,i_1],table_13[:,i_5,i_4,i_3,i_2,i_1])
+                                                                      #ax2.plot(table_12[:,i_5,i_4,i_3,i_2,i_1],table_13[:,i_5,i_4,i_3,i_2,i_1])
+                                                            #if corr[0,1] > 0.0:
+                                                                      #ax.plot(table_12[:,i_5,i_4,i_3,i_2,i_1],table_13[:,i_5,i_4,i_3,i_2,i_1])
+
           
           """
                     #ax.scatter(dust,table_13[:,0,4,2,1,i_1])
@@ -99,5 +125,4 @@ for loop in range(11,12):
           
           """
           
-
 # %%
