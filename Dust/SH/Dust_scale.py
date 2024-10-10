@@ -6,12 +6,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-HD_base = np.loadtxt("/Users/nyonn/Desktop/pythoncode/Dust/SH/input_hc/1dd_after.hc")
+HD_base = np.loadtxt("/Users/nyonn/Desktop/pythoncode/Dust/SH/input_hc/3dd_after.hc")
 altitude = HD_base[:,0]
 density = HD_base[:,1]
 new_density = np.zeros(len(density))
 
-inc_density = 1
+inc_density = 0.1
 
 fig = plt.figure()
 plt.plot(density, altitude, label="Original", color="black", linestyle="solid")
@@ -24,5 +24,5 @@ for i in range(len(density)):
     new_density[i] = density[i] + inc_density
     plt.plot(new_density, altitude, label="Scaled", linestyle="dashed")
     new_HD = np.column_stack((altitude, new_density))
-    np.savetxt("/Users/nyonn/Desktop/pythoncode/Dust/SH/input_HD/HDD_after/" +str(i)+ "d.hc", new_HD)
+    #np.savetxt("/Users/nyonn/Desktop/pythoncode/Dust/SH/input_HD/HDD_after/" +str(i)+ "d.hc", new_HD)
 # %%

@@ -11,7 +11,7 @@ from matplotlib.cm import ScalarMappable
 
 # %%
 # -------------------------------------- Figure 7 --------------------------------------
-all_data = readsav("/Users/nyonn/Desktop/論文/retrieval dust/Sec-3/data/dust_seasonal_2.sav")
+all_data = readsav("/Users/nyonn/Desktop/論文/retrieval dust/Sec-3/data/dust_seasonal_rev.sav")
 dust_color = all_data["dust_color"]
 lat_ind = all_data["lat_ind"]
 Ls_ind = all_data["Ls_ind"]
@@ -32,7 +32,7 @@ derease_indices_all = np.where(np.diff(Ls_good) < 0)[0]
 
 # color mapの設定
 min_dust = 0.01
-max_dust = 6.0
+max_dust = 7.0
 cmap = plt.get_cmap('jet')
 
 norm = Normalize(vmin=min_dust, vmax=max_dust)
@@ -44,7 +44,6 @@ fig,axs = plt.subplots(3,1,dpi=600, figsize=(23, 15))
 axs[0].set_title("MY27", fontsize=30)
 axs[0].set_ylabel("Latitude [deg]", fontsize=20)
 axs[0].set_ylim(-90, 90)
-axs[0].set_xlim(130, 150)
 
 for i in range(derease_indices_all[0], derease_indices_all[1], 1):
     color = sm.to_rgba(dust_good[:,0,i])
@@ -54,7 +53,6 @@ for i in range(derease_indices_all[0], derease_indices_all[1], 1):
 axs[1].set_title("MY28", fontsize=30)
 axs[1].set_ylabel("Latitude [deg]", fontsize=20)
 axs[1].set_ylim(-90, 90)
-axs[1].set_xlim(50, 80)
 
 for i in range(derease_indices_all[1], derease_indices_all[2], 1):
     color = sm.to_rgba(dust_good[:,0,i])
@@ -64,7 +62,6 @@ for i in range(derease_indices_all[1], derease_indices_all[2], 1):
 axs[2].set_title("MY29", fontsize=30)
 axs[2].set_ylabel("Latitude [deg]", fontsize=20)
 axs[2].set_xlabel("Solar Longitude [deg]", fontsize=25)
-axs[2].set_xlim(20, 50)
 axs[2].set_ylim(-90, 90)
 
 for i in range(derease_indices_all[2], count-1 ,1):
@@ -73,7 +70,7 @@ for i in range(derease_indices_all[2], count-1 ,1):
     axs[2].scatter(LS_plt, lat_ind, c=color, cmap="viridis", s=1, zorder=3)
 
 cbar = plt.colorbar(sm,ax=axs.ravel().tolist(),orientation='vertical',aspect=90)
-cbar.set_label("Dust optical depth at 2.77 μm", fontsize=20)
+cbar.set_label("Dust optical depth at 2.0 μm", fontsize=20)
 
 
 # %%
