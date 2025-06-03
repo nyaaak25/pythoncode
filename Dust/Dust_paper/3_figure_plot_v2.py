@@ -32,42 +32,101 @@ derease_indices_all = np.where(np.diff(Ls_good) < 0)[0]
 
 # color mapの設定
 min_dust = 0.01
-max_dust = 7.0
+max_dust = 5.0
 cmap = plt.get_cmap('jet')
 
 norm = Normalize(vmin=min_dust, vmax=max_dust)
 sm = ScalarMappable(cmap=cmap, norm=norm)
 sm.set_array([])
 
+xticks = np.arange(0, 361, 60)
+yticks = np.arange(-90, 91, 30)
+
 # プロットをする
-fig,axs = plt.subplots(3,1,dpi=600, figsize=(23, 15))
+fig,axs = plt.subplots(3,1,dpi=300, figsize=(23, 15))
 axs[0].set_title("MY27", fontsize=30)
 axs[0].set_ylabel("Latitude [deg]", fontsize=20)
 axs[0].set_ylim(-90, 90)
+axs[0].set_yticks(np.arange(-90, 91, 30))
+axs[0].set_xlim(0, 360)
+axs[0].set_xticks(np.arange(0, 361, 60))
+"""
+for xtick in xticks:
+    axs[0].axvline(x=xtick, color='black', linestyle='--', linewidth=2)
 
-for i in range(derease_indices_all[0], derease_indices_all[1], 1):
+for ytick in yticks:
+    axs[0].axhline(y=ytick, color='black', linestyle='--', linewidth=2)
+"""
+
+my27_ind = derease_indices_all[1] - derease_indices_all[0]
+my27_ls = np.zeros((my27_ind+1, 181))
+my27_dust = np.zeros((my27_ind+1, 181))
+my27_lat = np.zeros((my27_ind+1, 181))
+
+for i in range(derease_indices_all[0] + 1, derease_indices_all[1], 1):
     color = sm.to_rgba(dust_good[:,0,i])
     LS_plt = np.repeat(Ls_good[i], len(lat_ind))
     axs[0].scatter(LS_plt, lat_ind, c=color, cmap="viridis", s=1, zorder=3)
 
+    i27 = i - derease_indices_all[0]-1
+    my27_ls[i27,:] = Ls_good[i]
+    my27_dust[i27,:] = dust_good[:,0,i]
+    my27_lat[i27,:] = lat_ind
+
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure8/my27_ls.txt", my27_ls)
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure8/my27_dust.txt", my27_dust)
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure8/my27_lat.txt", my27_lat)
+
 axs[1].set_title("MY28", fontsize=30)
 axs[1].set_ylabel("Latitude [deg]", fontsize=20)
 axs[1].set_ylim(-90, 90)
+axs[1].set_yticks(np.arange(-90, 91, 30))
+axs[1].set_xlim(0, 360)
+axs[1].set_xticks(np.arange(0, 361, 60))
 
-for i in range(derease_indices_all[1], derease_indices_all[2], 1):
+my28_ls = np.zeros((derease_indices_all[2] - derease_indices_all[1]+1, 181))
+my28_dust = np.zeros((derease_indices_all[2] - derease_indices_all[1]+1, 181))
+my28_lat = np.zeros((derease_indices_all[2] - derease_indices_all[1]+1, 181))
+
+for i in range(derease_indices_all[1] + 1, derease_indices_all[2], 1):
     color = sm.to_rgba(dust_good[:,0,i])
     LS_plt = np.repeat(Ls_good[i], len(lat_ind))
     axs[1].scatter(LS_plt, lat_ind, c=color, cmap="viridis", s=1, zorder=3)
+
+    i28 = i - derease_indices_all[1]-1
+    my28_ls[i28,:] = Ls_good[i]
+    my28_dust[i28,:] = dust_good[:,0,i]
+    my28_lat[i28,:] = lat_ind
+
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure8/my28_ls.txt", my28_ls)
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure8/my28_dust.txt", my28_dust)
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure8/my28_lat.txt", my28_lat)
 
 axs[2].set_title("MY29", fontsize=30)
 axs[2].set_ylabel("Latitude [deg]", fontsize=20)
 axs[2].set_xlabel("Solar Longitude [deg]", fontsize=25)
 axs[2].set_ylim(-90, 90)
+axs[2].set_yticks(np.arange(-90, 91, 30))
+axs[2].set_xlim(0, 360)
+axs[2].set_xticks(np.arange(0, 361, 60))
 
-for i in range(derease_indices_all[2], count-1 ,1):
+my29_ls = np.zeros((count - derease_indices_all[2]+1, 181))
+my29_dust = np.zeros((count - derease_indices_all[2]+1, 181))
+my29_lat = np.zeros((count - derease_indices_all[2]+1, 181))
+
+for i in range(derease_indices_all[2] + 1, count-1 ,1):
     color = sm.to_rgba(dust_good[:,0,i])
     LS_plt = np.repeat(Ls_good[i], len(lat_ind))
     axs[2].scatter(LS_plt, lat_ind, c=color, cmap="viridis", s=1, zorder=3)
+
+    i29 = i - derease_indices_all[2]-1
+    my29_ls[i29,:] = Ls_good[i]
+    my29_dust[i29,:] = dust_good[:,0,i]
+    my29_lat[i29,:] = lat_ind
+
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure8/my29_ls.txt", my29_ls)
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure8/my29_dust.txt", my29_dust)
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure8/my29_lat.txt", my29_lat)
 
 cbar = plt.colorbar(sm,ax=axs.ravel().tolist(),orientation='vertical',aspect=90)
 cbar.set_label("Dust optical depth at 2.0 μm", fontsize=20)
@@ -75,7 +134,7 @@ cbar.set_label("Dust optical depth at 2.0 μm", fontsize=20)
 
 # %%
 # -------------------------------------- Figure 3.2 --------------------------------------
-# Figure 3.2; Mathieuとの比較
+# Figure 8 seasonal dust variation
 data_dir = pjoin(dirname(sio.__file__), "tests", "data")
 sav_fname = "/Users/nyonn/Desktop/論文/retrieval dust/3章：Evaluate the method/data/evaluate_mathieu_points.sav"
 sav_data = readsav(sav_fname)

@@ -18,7 +18,8 @@ import matplotlib.gridspec as gridspec
 # detection critriaについての図を作成する
 # まずは生のリトリーバルデータをプロットする
 # ------------------------------------- Figure 10a -------------------------------------
-sav_fname = "/Users/nyonn/Desktop//論文/retrieval dust/Sec-4/data/ORB1448_4-1.sav"
+sav_fname = "/Users/nyonn/Desktop//論文/retrieval dust/Sec-4/data/ORB0920_3_1.sav"
+# 1448_4, 1339_1, 4482_3
 sav_data = readsav(sav_fname)
 longitude = sav_data["longi"]
 latitude = sav_data["lati"]
@@ -32,19 +33,22 @@ dust_opacity[:,80:96] = np.nan
 
 # dust optical depth
 min_dust = 0.01
-max_dust = 6.0
+max_dust = 1.0
 
 fig = plt.figure(dpi=500)
 ax = fig.add_subplot(111)
-ax.set_xlabel("Longitude", fontsize=14)
-ax.set_ylabel("Latitude", fontsize=14)
-im = ax.scatter(longitude, latitude, c=dust_opacity, cmap="jet", vmin=min_dust, vmax=max_dust)
-fig.colorbar(im, orientation="vertical", label="Dust optical depth")
+ax.set_xlabel("Longitude [°E]", fontsize=14)
+ax.set_ylabel("Latitude [°N]", fontsize=14)
+im = ax.scatter(longitude, latitude, c=dust_opacity, cmap="jet", vmin=min_dust, vmax=max_dust,s=2)
+fig.colorbar(im, orientation="vertical", label="Dust optical depth", extend='max')
 
+data_sav = np.stack((longitude, latitude, dust_opacity), axis=-1)
+data_sav_2d = data_sav.reshape(-1, data_sav.shape[-1])
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure10/ORB1448_1-raw.txt", data_sav_2d)
 # %%
 # 1deg×1degマップを作成する
 # ------------------------------------- Figure 10b -------------------------------------
-sav_fname = "/Users/nyonn/Desktop//論文/retrieval dust/Sec-4/data/ORB1448_4.sav"
+sav_fname = "/Users/nyonn/Desktop//論文/retrieval dust/Sec-4/data/ORB1339_1.sav"
 sav_data = readsav(sav_fname)
 
 lat = sav_data["bin_lat"]
@@ -52,14 +56,19 @@ lon = sav_data["bin_lon"]
 med = sav_data["bin_med"]
 
 min_dust = 0.01
-max_dust = 6.0
+max_dust = 3.0
 
 fig = plt.figure(dpi=500)
 ax = fig.add_subplot(111)
-ax.set_xlabel("Longitude", fontsize=14)
-ax.set_ylabel("Latitude", fontsize=14)
+ax.set_xlabel("Longitude [°E]", fontsize=14)
+ax.set_ylabel("Latitude [°N]", fontsize=14)
 im = ax.scatter(lon, lat, c=med, cmap="jet", vmin=min_dust, vmax=max_dust)
-fig.colorbar(im, orientation="vertical", label="Dust optical depth")
+fig.colorbar(im, orientation="vertical", label="Dust optical depth", extend='max')
+
+data_bin = np.stack((lon, lat, med), axis=-1)
+data_bin_2d = data_bin.reshape(-1, data_bin.shape[-1])
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure10/ORB1339_1-bin.txt", data_bin_2d)
+
 
 # %%
 # non-detection例のデータを作成する
@@ -72,14 +81,13 @@ lon = sav_data["bin_lon"]
 med = sav_data["bin_med"]
 
 min_dust = 0.01
-max_dust = 6.0
+max_dust = 1.0
 
 fig = plt.figure(dpi=500)
 ax = fig.add_subplot(111)
-ax.set_xlabel("Longitude", fontsize=14)
-ax.set_ylabel("Latitude", fontsize=14)
+ax.set_xlabel("Longitude [°E]", fontsize=14)
+ax.set_ylabel("Latitude [°N]", fontsize=14)
 im = ax.scatter(lon, lat, c=med, cmap="jet", vmin=min_dust, vmax=max_dust)
-
 fig.colorbar(im, orientation="vertical", label="Dust optical depth")
 
 # %%
@@ -93,18 +101,19 @@ lon = sav_data["bin_lon"]
 med = sav_data["bin_med"]
 
 min_dust = 0.01
-max_dust = 6.0
+max_dust = 3.0
 
 fig = plt.figure(dpi=500)
 ax = fig.add_subplot(111)
-ax.set_xlabel("Longitude", fontsize=14)
-ax.set_ylabel("Latitude", fontsize=14)
+ax.set_xlabel("Longitude [°E]", fontsize=14)
+ax.set_ylabel("Latitude [°N]", fontsize=14)
 # medの値が2.0以上のところは赤くプロットする
 ind = np.where(med > 2.0)
-ax.scatter(lon[ind], lat[ind], c="red",s=70)
+ax.scatter(lon[ind], lat[ind], c="black",s=80)
 
 im = ax.scatter(lon, lat, c=med, cmap="jet", vmin=min_dust, vmax=max_dust)
-fig.colorbar(im, orientation="vertical", label="Dust optical depth")
+#ax.scatter(lon[ind], lat[ind], c="red")
+fig.colorbar(im, orientation="vertical", label="Dust optical depth", extend='max')
 
 # %%
 # non-detection例のデータを作成する
@@ -117,18 +126,18 @@ lon = sav_data["bin_lon"]
 med = sav_data["bin_med"]
 
 min_dust = 0.01
-max_dust = 6.0
+max_dust = 3.0
 
 fig = plt.figure(dpi=500)
 ax = fig.add_subplot(111)
-ax.set_xlabel("Longitude", fontsize=14)
-ax.set_ylabel("Latitude", fontsize=14)
+ax.set_xlabel("Longitude [°E]", fontsize=14)
+ax.set_ylabel("Latitude [°N]", fontsize=14)
 
 ind = np.where(med > 2.0)
-ax.scatter(lon[ind], lat[ind], c="red",s=70)
+#ax.scatter(lon[ind], lat[ind], c="black",s=80)
 
 im = ax.scatter(lon, lat, c=med, cmap="jet", vmin=min_dust, vmax=max_dust)
-fig.colorbar(im, orientation="vertical", label="Dust optical depth")
+fig.colorbar(im, orientation="vertical", label="Dust optical depth", extend='max')
 
 # %%
 # non-detection例のデータを作成する
@@ -141,18 +150,18 @@ lon = sav_data["bin_lon"]
 med = sav_data["bin_med"]
 
 min_dust = 0.01
-max_dust = 6.0
+max_dust = 3.0
 
 fig = plt.figure(dpi=500)
 ax = fig.add_subplot(111)
-ax.set_xlabel("Longitude", fontsize=14)
-ax.set_ylabel("Latitude", fontsize=14)
+ax.set_xlabel("Longitude [°E]", fontsize=14)
+ax.set_ylabel("Latitude [°N]", fontsize=14)
 
 ind = np.where(med > 2.0)
-ax.scatter(lon[ind], lat[ind], c="red",s=70)
+#ax.scatter(lon[ind], lat[ind], c="black",s=80)
 
 im = ax.scatter(lon, lat, c=med, cmap="jet", vmin=min_dust, vmax=max_dust)
-fig.colorbar(im, orientation="vertical", label="Dust optical depth")
+fig.colorbar(im, orientation="vertical", label="Dust optical depth", extend='max')
 
 
 
@@ -216,11 +225,12 @@ count = np.size(Ls_good)
 derease_indices_all = np.where(np.diff(Ls_good) < 0)[0]
 
 # 全観測のヒストグラムを作成する
-MY27_all_hist = Ls_good[derease_indices_all[0]:derease_indices_all[1]]
+MY27_all_hist = Ls_good[derease_indices_all[0]+1:derease_indices_all[1]]
 ax0.set_ylabel("Number of orbits", fontsize=20)
 ax0.set_title("MY27", fontsize=30)
 ax0.set_xlim(0, 360)
 ax0.hist(MY27_all_hist,bins=36,histtype='bar',color='blue',edgecolor='black')
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure11/MY27_all_ls.txt", MY27_all_hist)
 
 # データカバレージのプロットをする
 ax1.set_ylabel("Latitude [Deg]", fontsize=20)
@@ -231,6 +241,9 @@ for i in range(derease_indices_all[0], derease_indices_all[1], 1):
     color = sm.to_rgba(local_good[:,0,i])
     LS_plt = np.repeat(Ls_good[i], len(lat_ind))
     ax1.scatter(LS_plt, lat_ind, c=color, cmap="viridis", s=1, zorder=3)
+
+My27_all_localtime = local_good[:,0,derease_indices_all[0]+1:derease_indices_all[1]]
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure11/MY27_all_localtime.txt", My27_all_localtime)
 
 # 検出されたLDSをplotする
 path_work = "/Users/nyonn/Desktop/論文/retrieval dust/Sec-4/data/EW-detect/"
@@ -246,6 +259,10 @@ ax2.set_xlabel("Solar longitude [Deg]", fontsize=28)
 ax2.set_ylabel("Latitude [Deg]", fontsize=20)
 ax2.set_xlim(0, 360)
 ax2.set_ylim(-65, 65)
+
+my27_detect_lds = np.zeros((95))
+my27_detect_lds_lc = np.zeros((95))
+my27_detect_lds_ls = np.zeros((95))
 
 for i in range(0,94,1):
     # ファイルを読み込む
@@ -263,6 +280,12 @@ for i in range(0,94,1):
 
     color = sm2.to_rgba(np.median(bin_med))
     ax2.scatter(Ls,med_lat, color=color)
+    my27_detect_lds[i] = np.median(bin_med)
+    my27_detect_lds_lc[i] = np.median(bin_lat)
+    my27_detect_lds_ls[i] = Ls
+
+my27_data_lds = np.stack((my27_detect_lds,my27_detect_lds_lc, my27_detect_lds_ls),axis=1)
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure11/MY27_detect_lds.txt", my27_data_lds)
 
 # カラーバーを作成
 cbar = plt.colorbar(sm,cax=cax, orientation='vertical')
@@ -332,21 +355,25 @@ count = np.size(Ls_good)
 derease_indices_all = np.where(np.diff(Ls_good) < 0)[0]
 
 # 全観測のヒストグラムを作成する
-MY28_all_hist = Ls_good[derease_indices_all[1]:derease_indices_all[2]]
+MY28_all_hist = Ls_good[derease_indices_all[1]+1:derease_indices_all[2]]
 ax0.set_ylabel("Number of orbits", fontsize=20)
 ax0.set_title("MY28", fontsize=30)
 ax0.set_xlim(0, 360)
 ax0.hist(MY28_all_hist,bins=36,histtype='bar',color='blue',edgecolor='black')
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure11/MY28_all_ls.txt", MY28_all_hist)
 
 # データカバレージのプロットをする
 ax1.set_ylabel("Latitude [Deg]", fontsize=20)
 ax1.set_ylim(-90, 90)
 ax1.set_xlim(0, 360)
 
-for i in range(derease_indices_all[1], derease_indices_all[2], 1):
+for i in range(derease_indices_all[1]+1, derease_indices_all[2], 1):
     color = sm.to_rgba(local_good[:,0,i])
     LS_plt = np.repeat(Ls_good[i], len(lat_ind))
     ax1.scatter(LS_plt, lat_ind, c=color, cmap="viridis", s=1, zorder=3)
+
+My28_all_localtime = local_good[:,0,derease_indices_all[1]+1:derease_indices_all[2]]
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure11/MY28_all_localtime.txt", My28_all_localtime)
 
 # 検出されたLDSをplotする
 path_work = "/Users/nyonn/Desktop/論文/retrieval dust/Sec-4/data/EW-detect/"
@@ -362,6 +389,10 @@ ax2.set_xlabel("Solar longitude [Deg]", fontsize=28)
 ax2.set_ylabel("Latitude [Deg]", fontsize=20)
 ax2.set_xlim(0, 360)
 ax2.set_ylim(-65, 65)
+
+my28_detect_lds = np.zeros((35))
+my28_detect_lds_lc = np.zeros((35))
+my28_detect_lds_ls = np.zeros((35))
 
 for i in range(95,130,1):
     # ファイルを読み込む
@@ -379,6 +410,13 @@ for i in range(95,130,1):
 
     color = sm2.to_rgba(np.median(bin_med))
     ax2.scatter(Ls,med_lat, color=color)
+
+    my28_detect_lds[i-95] = np.median(bin_med)
+    my28_detect_lds_lc[i-95] = np.median(bin_lat)
+    my28_detect_lds_ls[i-95] = Ls
+
+my28_data_lds = np.stack((my28_detect_lds,my28_detect_lds_lc,my28_detect_lds_ls),axis=1)
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure11/MY28_detect_lds.txt", my28_data_lds)
 
 # カラーバーを作成
 cbar = plt.colorbar(sm,cax=cax, orientation='vertical')
@@ -447,21 +485,25 @@ count = np.size(Ls_good)
 derease_indices_all = np.where(np.diff(Ls_good) < 0)[0]
 
 # 全観測のヒストグラムを作成する
-MY29_all_hist = Ls_good[derease_indices_all[2]:derease_indices_all[3]]
+MY29_all_hist = Ls_good[derease_indices_all[2]+1:derease_indices_all[3]]
 ax0.set_ylabel("Number of orbits", fontsize=20)
 ax0.set_title("MY29", fontsize=30)
 ax0.set_xlim(0, 360)
 ax0.hist(MY29_all_hist,bins=36,histtype='bar',color='blue',edgecolor='black')
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure11/MY29_all_ls.txt", MY29_all_hist)
 
 # データカバレージのプロットをする
 ax1.set_ylabel("Latitude [Deg]", fontsize=20)
 ax1.set_ylim(-90, 90)
 ax1.set_xlim(0, 360)
 
-for i in range(derease_indices_all[2], derease_indices_all[3], 1):
+for i in range(derease_indices_all[2]+1, derease_indices_all[3], 1):
     color = sm.to_rgba(local_good[:,0,i])
     LS_plt = np.repeat(Ls_good[i], len(lat_ind))
     ax1.scatter(LS_plt, lat_ind, c=color, cmap="viridis", s=1, zorder=3)
+
+My29_all_localtime = local_good[:,0,derease_indices_all[2]+1:derease_indices_all[3]]
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure11/MY29_all_localtime.txt", My29_all_localtime)
 
 # 検出されたLDSをplotする
 path_work = "/Users/nyonn/Desktop/論文/retrieval dust/Sec-4/data/EW-detect/"
@@ -477,6 +519,10 @@ ax2.set_xlabel("Solar longitude [Deg]", fontsize=28)
 ax2.set_ylabel("Latitude [Deg]", fontsize=20)
 ax2.set_xlim(0, 360)
 ax2.set_ylim(-65, 65)
+
+my29_detect_lds = np.zeros((15))
+my29_detect_lds_lc = np.zeros((15))
+my29_detect_lds_ls = np.zeros((15))
 
 for i in range(131, count, 1):
     # ファイルを読み込む
@@ -494,6 +540,13 @@ for i in range(131, count, 1):
 
     color = sm2.to_rgba(np.median(bin_med))
     ax2.scatter(Ls,med_lat, color=color)
+
+    my29_detect_lds[i-131] = np.median(bin_med)
+    my29_detect_lds_lc[i-131] = np.median(bin_lat)
+    my29_detect_lds_ls[i-131] = Ls
+
+my29_data_lds = np.stack((my29_detect_lds,my29_detect_lds_lc,my29_detect_lds_ls),axis=1)
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure11/MY29_detect_lds.txt", my29_data_lds)
 
 # カラーバーを作成
 cbar = plt.colorbar(sm,cax=cax, orientation='vertical')
@@ -555,6 +608,9 @@ p = pro_ss[nonzero_indices] / 100  # パーセンテージから確率に変換
 n = all_ss_hist[nonzero_indices]
 er_bar[nonzero_indices] = np.sqrt(p * (1 - p) / n) * 100  # 百分率に戻す
 
+# 0から24までの数字の配列を作成する
+time = np.arange(24)
+
 # エラーバーにNaNが含まれていないか確認
 print("pro_ss:", pro_ss)
 print("er_bar:", er_bar)
@@ -566,7 +622,7 @@ print('Observation', all_ss_hist[ind1])
 
 # グラフを描画
 fig, axs = plt.subplots(dpi=500, figsize=(5, 5))  # DPIとサイズを調整
-axs.set_title("Ls 0°-180°", fontsize=20)
+axs.set_title("(a) Ls 0°-180°", fontsize=20)
 axs.set_xlabel("Local time [h]", fontsize=14)
 axs.set_ylabel("Probability [%]", fontsize=14)
 axs.set_xlim(0, 23)  # ヒストグラムの範囲に合わせる
@@ -585,6 +641,9 @@ axs.set_xlim(6, 18)
 axs.set_ylim(0, 5)
 axs.legend()
 plt.show()
+
+ss_data = np.stack((time,all_ss_hist, obs_ss_hist), axis=1)
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure12/ls0-180_probability.txt", ss_data)
 
 # %%
 # ------------------------------------- Figure 12b -------------------------------------
@@ -616,11 +675,13 @@ sm.set_array([])
 
 fig = plt.figure(dpi=800)
 ax = fig.add_subplot(111)
-ax.set_title("Ls 0°-180°", fontsize=20)
+ax.set_title("(b) Ls 0°-180°", fontsize=20)
 ax.set_xlabel("Longitude", fontsize=14)
 ax.set_ylabel("Latitude", fontsize=14)
-ax.set_xlim(-180, 195)
+ax.set_xlim(-185, 195)
 ax.set_ylim(-100, 100)
+ax.set_xticks(np.arange(-180, 181, 60))
+ax.set_yticks(np.arange(-90, 91, 30))
 
 # 15°×15°の格子点を作成する
 smooth_all = np.zeros((13, 24))
@@ -657,6 +718,9 @@ ax.scatter(smooth_long[non_zero_indices], smooth_lat[non_zero_indices], color=co
 cbar = plt.colorbar(sm)
 cbar.set_label("Probability of detection [%]", fontsize=14)
 plt.show()
+
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure12/ls0-180_all-observation-spatial.txt", smooth_all)
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure12/ls0-180_observation-spatial.txt", smooth_obs)
 
 # ------------------------------------- Figure 13a -------------------------------------
 # %%
@@ -719,9 +783,12 @@ ind1 = np.where(obs_aw_hist > 0)
 print('detection;', obs_aw_hist[ind1])
 print('Observation', all_aw_hist[ind1])
 
+# 0から24の数字の配列を作成する
+time = np.arange(24)
+
 # グラフを描画
 fig, axs = plt.subplots(dpi=800, figsize=(5, 5))  # DPIとサイズを調整
-axs.set_title("Ls 180°-360°", fontsize=20)
+axs.set_title("(c) Ls 180°-360°", fontsize=20)
 axs.set_xlabel("Local time [h]", fontsize=14)
 axs.set_ylabel("Probability [%]", fontsize=14)
 axs.set_xlim(0, 23)  # ヒストグラムの範囲に合わせる
@@ -737,9 +804,12 @@ for i in range(0, 24, 1):
 axs.errorbar(range(0, 24, 1), pro_aw, yerr=er_bar, color='black', ecolor='black', fmt='o', capsize=5, label='Error Bars')
 
 axs.set_xlim(6, 18)
-axs.set_ylim(0, 15)
+axs.set_ylim(-1, 20)
 axs.legend()
 plt.show()
+
+aw_data = np.stack((time, all_aw_hist, obs_aw_hist), axis=1)
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure12/ls180-360_probability.txt", aw_data)
 
 # %%    
 # ------------------------------------- Figure 13b -------------------------------------
@@ -771,11 +841,13 @@ sm.set_array([])
 
 fig = plt.figure(dpi=800)
 ax = fig.add_subplot(111)
-ax.set_title("Ls 180°-360°", fontsize=20)
+ax.set_title("(d) Ls 180°-360°", fontsize=20)
 ax.set_xlabel("Longitude", fontsize=14)
 ax.set_ylabel("Latitude", fontsize=14)
-ax.set_xlim(-180, 195)
+ax.set_xlim(-185, 195)
 ax.set_ylim(-100, 100)
+ax.set_xticks(np.arange(-180, 181, 60))
+ax.set_yticks(np.arange(-90, 91, 30))
 
 # 15°×15°の格子点を作成する
 smooth_all = np.zeros((13, 24))
@@ -807,6 +879,11 @@ ax.scatter(smooth_long[zero_indices], smooth_lat[zero_indices], color="grey", al
 RATIO_map = (smooth_obs[non_zero_indices] / smooth_all[non_zero_indices]) * 100
 colors = sm.to_rgba(RATIO_map.flatten())
 ax.scatter(smooth_long[non_zero_indices], smooth_lat[non_zero_indices], color=colors,marker='s', s=100)
+
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure12/smooth_longitude.txt", smooth_long)
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure12/smooth_latitude.txt", smooth_lat)
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure12/ls180-360_all-observation-spatial.txt", smooth_all)
+np.savetxt("/Users/nyonn/Desktop/論文/retrieval dust/Open-research/Figure12/ls180-360_detection-spatial.txt", smooth_obs)
 
 # カラーバーを作成
 cbar = plt.colorbar(sm)
