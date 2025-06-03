@@ -6,11 +6,257 @@ from scipy.io import readsav
 import scipy.io as sio
 from os.path import dirname, join as pjoin
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 from memory_profiler import profile
 import time
+import os
 from numba import jit, f8
+# %%
+# 2.77 μmにおける飽和度を計算する
+sav_data_name  = '/Users/nyonn/Desktop/pythoncode/Dust/Dust_paper/test_sp_saturated_dop.sav'
+sav_data = readsav(sav_data_name)
+
+dev = sav_data['dev']
+result = sav_data['dust_result']
+
+# 0から1.2まで0.3刻みのdust gridを作成
+dust_grid = np.arange(0, 1.5, 0.3)
+
+# プロットを作成する
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(111, title="Saturation degree")
+ax.set_xlabel("Surface pressure [Pa]")
+ax.set_ylabel("Dust optical depth")
+ax.scatter(dev, result, color='black')
+# dust optical depth=0の線を引く
+ax.axhline(y=0, color='gray', linestyle='--')
+ax.scatter(dev[10], result[10], color='red')
+ax.scatter(dev[5], result[5], color='blue')
+ax.scatter(dev[15], result[15], color='blue')
+
+ax.legend(fontsize=7)
+
+# %%
+# 2.77 μmにおける飽和度を計算する
+sav_data_name  = '/Users/nyonn/Desktop/pythoncode/Dust/Dust_paper/test_sp_saturated.sav'
+sav_data = readsav(sav_data_name)
+
+dev = sav_data['dev']
+result = sav_data['dust_result']
+
+# 0から1.2まで0.3刻みのdust gridを作成
+dust_grid = np.arange(0, 1.5, 0.3)
+
+# プロットを作成する
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(111, title="Saturation degree")
+ax.set_xlabel("Dust optical depth")
+ax.set_ylabel("Radiance [W/m^2/sr/um]")
+for i in range(len(dev)):
+    ax.plot(dust_grid, result[:,i], label="SP = " + str(dev[i]))
+
+ax.legend(fontsize=7)
+
+# %%
+# OMEGAのスペクトルをプロットする
+# write by nyoon  29/10/2024
+import numpy as np
+import matplotlib.pylab as plt
+from scipy.io import readsav
+
+# ------------------- parameter setting --------------------
+xind = 10
+yind = 50
+
+# -------------------- dataの読み込み --------------------
+# ORB0313_4.savを読み込み
+sav_fname = "/Users/nyonn/IDLWorkspace/Default/savfile/ORB0313_4.sav"
+sav_data = readsav(sav_fname)
+
+specmars_data = np.loadtxt("/Users/nyonn/IDLWorkspace/Default/profile/specsol_0403.dat")
+# 太陽放射輝度の計算
+# 火星の距離で変化する太陽定数を計算
+dmars = sav_data["dmars"]
+specmars = specmars_data / dmars / dmars
+
+# 各変数の定義
+wvl = sav_data["wvl"]
+jdat = sav_data["jdat"]
+lati = sav_data["lati"]
+longi = sav_data["longi"]
+Ls = sav_data["Solar_longitude"]
+geocube = sav_data["geocube"]
+sub_solar = sav_data["sub_solar_longitude"]
+
+# -------------------- 各装置の定義 --------------------
+# visのindexは256~351
+vis_ind = np.arange(256, 352)
+wvl_vis = wvl[vis_ind]
+specmars_vis = specmars[vis_ind]
+
+# Cのindexは0から127
+c_ind = np.arange(0, 128)
+wvl_c = wvl[c_ind]
+specmars_c = specmars[c_ind]
+
+# Lのindexは128から255
+l_ind = np.arange(128, 256)
+wvl_l = wvl[l_ind]
+specmars_l = specmars[l_ind]
+
+# ------------- jdatの計算 ----------------
+jdat_vis_og = jdat[xind, vis_ind, yind]
+jdat_c_og = jdat[xind, c_ind, yind]
+jdat_l_og = jdat[xind, l_ind, yind]
+
+# sav data originalのままだとread onlyなので、コピーを作成
+jdat_vis = jdat_vis_og + 0
+jdat_c = jdat_c_og + 0
+jdat_l = jdat_l_og + 0
+
+# specmarsで割る
+# radianceが必要な場合はcomment out
+flux_vis = jdat_vis / specmars_vis
+flux_c = jdat_c / specmars_c
+flux_l = jdat_l / specmars_l
+
+# 素子が死んでいる場所をnanに変換
+jdat_vis[jdat_vis < 0.0000000001] = np.nan
+jdat_c[jdat_c < 0.0000000001] = np.nan
+jdat_l[jdat_l < 0.0000000001] = np.nan
+
+flux_vis[flux_vis < 0.0000000001] = np.nan
+flux_c[flux_c < 0.0000000001] = np.nan
+flux_l[flux_l < 0.0000000001] = np.nan
+
+# ------------------- plot --------------------
+# visのプロット
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(111, title="OMEGA VIS spectrum")
+ax.plot(wvl_vis, flux_vis, label="VIS", color="blue")
+ax.set_xlabel("Wavelength [μm]")
+ax.set_ylabel("Reflectance [I/F]")
+
+# Cのプロット
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(111, title="OMEGA C spectrum")
+ax.plot(wvl_c, flux_c, label="C", color="red")
+ax.set_xlabel("Wavelength [μm]")
+ax.set_ylabel("Reflectance [I/F]")
+
+# Lのプロット
+fig = plt.figure(dpi=200)
+ax = fig.add_subplot(111, title="OMEGA L spectrum")
+ax.plot(wvl_l, flux_l, label="L", color="green")
+ax.set_xlabel("Wavelength [μm]")
+ax.set_ylabel("Reflectance [I/F]")
+ 
+# -------- geometory informationの計算 ------------
+incidence = geocube[xind, 8, yind]*1e-4
+emission = geocube[xind, 9, yind]*1e-4
+phase = geocube[xind, 10, yind]*1e-4
+
+local_time = (longi -sub_solar)*24/360+12
+indLT1 = np.where(local_time < 0)
+if len(indLT1) < 1:
+     local_time[indLT1]=24+local_time[indLT1]
+
+indLT2 = np.where(local_time >= 24)
+if len(indLT2) < 1:
+     local_time[indLT2]=local_time[indLT2]-24
+
+# --------- geometory informationのprint ------------
+print("Ls:", Ls)
+print("Latitude:", lati[xind, yind])
+print("Longitude:", longi[xind, yind])
+print("Incidence angle:", incidence)
+print("Emission angle:", emission)
+print("Phase angle:", phase)
+print("Local time:", local_time[xind, yind])
+
+# %%
+# Curiosityのデータを読み込む
+
+import struct
+import pandas as pd
+
+# データファイルのパス
+data_file = '/Users/nyonn/Desktop/pythoncode/Dust/RME_397535244ESE00010000000ACQ____M1.TAB'
+label_file = '/Users/nyonn/Desktop/pythoncode/Dust/RME_397535244ESE00010000000ACQ____M1.LBL'
+
+# ラベルファイルから必要な情報を取得（手動で行うことを前提）
+# 例: AIR_TEMPはレコードの20バイト目から4バイト（FLOAT）
+#      PRESSUREはレコードの24バイト目から4バイト（FLOAT）
+
+# バイナリデータの読み込み
+with open(data_file, 'rb') as f:
+    data = f.read()
+
+# レコードサイズ（例: 100バイト）
+record_size = 616
+num_records = len(data) // record_size
+
+air_temps = []
+pressures = []
+
+for i in range(num_records):
+    record = data[i*record_size:(i+1)*record_size]
+    # AIR_TEMPが20バイト目から4バイトの場合
+    air_temp = struct.unpack('>f', record[100:104])[0]  # '>f'はビッグエンディアンのFLOAT
+    # PRESSUREが24バイト目から4バイトの場合
+    pressure = struct.unpack('>f', record[200:204])[0]
+    air_temps.append(air_temp)
+    pressures.append(pressure)
+
+# データフレームの作成
+df = pd.DataFrame({
+    'Air Temperature (°C)': air_temps,
+    'Pressure (Pa)': pressures
+})
+
+print(df.head())
+
+import matplotlib.pyplot as plt
+
+# 例: 気温の時系列プロット
+plt.figure(figsize=(10, 5))
+plt.plot(df['Air Temperature (°C)'], label='Air Temperature (°C)')
+plt.xlabel('Record Number')
+plt.ylabel('Temperature (°C)')
+plt.title('Temperature Variation of Curiosity Rover')
+plt.legend()
+plt.show()
+
+# 例: 圧力の時系列プロット
+plt.figure(figsize=(10, 5))
+plt.plot(df['Pressure (Pa)'], label='Pressure (Pa)', color='orange')
+plt.xlabel('Record Number')
+plt.ylabel('Pressure (Pa)')
+plt.title('Curiosty Rover Pressure Variation')
+plt.legend()
+plt.show()
+
+
+# %%
+# OMEGAの波長ごとのファイルを作成する
+# OMEGAの波長を取得する
+OMEGA_wav = np.loadtxt('/Users/nyonn/Desktop/pythoncode/Soft/OMEGA_v/OMEGA_channnel_cm.dat')
+wvn = OMEGA_wav
+wav  = (1/ OMEGA_wav)*1e4
+
+# wavを3桁の数字に変換する
+wav_ind = np.round(wav,2) * 100
+
+# wav_indを四捨五入して、3桁の整数にする
+wav_ind_after = np.round(wav_ind,0)
+
+# OMEGA_wavをいれたファイルを作成する
+for i in range(len(wav_ind)):
+    np.savetxt('/Users/nyonn/Desktop/pythoncode/Soft/OMEGA_v/OMEGA_cm_' + str(int(wav_ind_after[i])) + '.dat', wvn[i:i+1], fmt='%.6f')
+
+# directoryを作成する
+for i in range(len(wav_ind)):
+    os.makedirs('/Users/nyonn/Desktop/pythoncode/Dust/SH/data-dustprofile/hc/' + str(int(wav_ind_after[i])))
 
 # %%
 fig = plt.figure(dpi=200)
